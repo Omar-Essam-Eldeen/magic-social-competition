@@ -232,3 +232,87 @@ accounts; all test state restored. Results:
   exact matches, no fixes needed. PATCH read/read-all NOT re-probed (prep
   already verified them; no unread notifications to test against).
 - Build green, lint exit 0. Next: Wave 2 UI agents (file-partitioned).
+
+## Phase 3 — Wave 2: UI + integration + live verification (2026-11-11, completed)
+
+- Commits f749b0b (Agent B: suggestions + follow UI, nav bell), ccb72f2
+  (Agent D: public profiles, threaded replies, search), 9950bff (Agent C:
+  notifications page, photo upload, likers modal, user routes). Integration
+  + verification fixes below in the same phase (uncommitted at this writing).
+- What landed: SuggestionsCard in the right aside (up to 5, skeletons /
+  error+Retry / empty state) + FollowButton (drives label from the follow
+  response, invalidates suggestions/profile/userProfile); Notifications nav
+  item (desktop) + tab (mobile) with unread badge (polls every 60s, capped
+  99+); /notifications page (actor avatar+name, human type text, relative
+  time, unread highlight + dot, click marks read + navigates to the post,
+  "Mark all read"); LikersModal (likes-count button opens it, rows link to
+  /users/:id); profile photo upload (FileInput, refreshUser + invalidate
+  profile; no cover upload — no endpoint); /users/:id public profile
+  (same hero as own Profile, FollowButton, Posts-only tab, redirects to
+  /profile for your own id); search over loaded posts (body/author
+  name/username, "N results for '…'" + clear, no-match empty state);
+  PAGE_TITLES gained /notifications (was falling back to "Magic Social").
+- Live API verification (throwaway @testmagic99 / @testmagic2 / @testmagic3,
+  all test state restored afterwards): follow toggle { following: true,
+  followersCount: 1 } then unfollowed; like -> unread-count 2 -> 3, likers
+  list [testmagic99]; mark-one-read (isRead true) + mark-all-read
+  (modifiedCount 4, unread 0); photo upload returns a webp URL; public
+  profile returns a followers array (initialFollowing fallback works);
+  suggestions exclude already-followed users.
+- THREE REAL BUGS found in verification, all fixed + re-verified:
+  - R1 (critical) Replies used the wrong endpoint. Agent D's CommentItem
+    called createComment with parentComment — the API rejects that field
+    ("\"parentComment\" is not allowed", both FormData and JSON) and the
+    reply would fail with a toast every time. Real endpoints, found by
+    probing: POST /posts/:postId/comments/:commentId/replies (returns
+    data.reply; accepts an optional image) and GET .../replies (returns
+    data.replies, newest first, with pagination). The comments list NEVER
+    contains replies (total counts only top-level), so PostDetails'
+    flat-list grouping was dead code. Fix: new createReply/getReplies in
+    api/Posts/Comments/api.ts, CreateReplyReq + AllRepliesResponse types,
+    parentComment removed from CreateCommentReq, CommentItem fetches its
+    own replies (query ["replies", postId, commentId]) and renders them
+    nested, PostDetails simplified to render top-level comments directly.
+    One reply level by design (nested items have no Reply button — the
+    API has no read path for replies to replies).
+  - R2 (critical) Suggestions 401 reload loop on /login. Mantine's
+    AppShell.Aside mounts children even when collapsed, so SuggestionsCard
+    mounted on /login + /signup while logged out; its query had no
+    enabled guard, got 401, and the interceptor's window.location.href =
+    "/login" full-reloaded the page — infinite loop, and the login submit
+    never completed. Fix (3 parts): enabled: !!user on the suggestions
+    query; {user && <SuggestionsCard />} in App.tsx; interceptor skips
+    the redirect when already on /login or /signup (just drops the stale
+    token). Verified: signin 200, no 401 storm, suggestions 200 only
+    when logged in.
+  - R3 (minor) Notification copy: notificationText handled "comment" /
+    "follow" / "share", but the API sends comment_post / follow_user, so
+    rows read "Test Magic comment post" / "follow user". Fix: added the
+    real values (comment_post -> "commented on your post", follow_user ->
+    "started following you", share_post -> "shared your post").
+- UI verification (Playwright + Firefox, vite preview :4173; harness
+  ~/workspace/predeploy/visual-verify/phase3-verify.js + dark-reshoot.js;
+  screenshots in shots/phase3/): 13/15 scripted checks PASS. The 2 FAILs
+  were script errors, not app bugs — the Follow check looked for a
+  "Following" button after the click, but the followed user leaves the
+  suggestions list on refetch (API confirmed followingCount 1); the
+  search no-match check regex missed the real text "No posts match '…'".
+  Verified by hand + screenshots: suggestions card + Follow (UI click
+  follows), notifications page (unread highlight, badge 2 -> 1 after
+  clicking one), click notification -> post page, reply posted via UI
+  appears nested, likers modal lists testmagic99, user profile hero +
+  Follow button, search filters + no-match state, photo upload via UI
+  (avatar becomes the uploaded image everywhere), dark mode (true dark
+  via emulated prefers-color-scheme — localStorage seeding does NOT work
+  with defaultColorScheme="auto") and mobile notifications/user profile.
+  Zero page errors. "Image corrupt or truncated" console errors for R2
+  CDN images are a proxy/harness artifact (same URLs render fine in
+  light shots; the downloaded webp is valid) — when an avatar image
+  fails, Firefox shows the img alt text ("Test / Mag…") in the avatar
+  slot, which is a fallback cosmetic wart, not an app defect.
+- Test data cleaned: all probe posts/comments/replies deleted, follows
+  undone, notifications read-all, unread 0. T2's avatar is now the
+  uploaded favicon (no un-upload endpoint; throwaway account, harmless).
+  Note: photo upload auto-creates a server-side "updated profile
+  picture." post (deleted with the rest).
+- Build green, lint exit 0. Phase 3 COMPLETE.

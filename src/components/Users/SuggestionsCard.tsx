@@ -1,14 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { Alert, Avatar, Button, Card, Group, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { getSuggestions } from "../../api/Users/api.ts";
+import { useAuth } from "../../context/useAuth.ts";
 import FollowButton from "./FollowButton.tsx";
 
 const MAX_SUGGESTIONS = 5;
 
 export default function SuggestionsCard() {
+  const { user } = useAuth();
+  // Never fire logged out: Mantine's AppShell.Aside mounts its children even
+  // when collapsed, so without this guard the query 401s on /login and the
+  // 401 interceptor full-reloads the page in a loop.
   const suggestionsQuery = useQuery({
     queryKey: ["suggestions"],
     queryFn: getSuggestions,
+    enabled: !!user,
   });
 
   const suggestions = suggestionsQuery.data?.data.slice(0, MAX_SUGGESTIONS) ?? [];

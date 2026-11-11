@@ -19,7 +19,11 @@ api.interceptors.response.use(
   (error) => {
     const url = error.config?.url ?? "";
     const isAuthCall = url.includes("/users/signin") || url.includes("/users/signup");
-    if (error.response?.status === 401 && !isAuthCall) {
+    // Already on an auth page: just drop the stale token — a full reload
+    // here would remount the app and refire the same request in a loop.
+    const onAuthPage =
+      window.location.pathname === "/login" || window.location.pathname === "/signup";
+    if (error.response?.status === 401 && !isAuthCall && !onAuthPage) {
       localStorage.removeItem("token");
       window.location.href = "/login";
     }

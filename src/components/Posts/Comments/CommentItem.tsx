@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ActionIcon, Avatar, Button, Card, FileInput, Group, Image, Stack, Text, TextInput } from "@mantine/core";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ActionIcon, Avatar, Box, Button, Card, FileInput, Group, Image, Stack, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import type { Comment } from "../../../api/Posts/Comments/types.ts";
-import { createComment, deleteComment, likeComment, updateComment } from "../../../api/Posts/Comments/api.ts";
+import { createReply, deleteComment, getReplies, likeComment, updateComment } from "../../../api/Posts/Comments/api.ts";
 import { useAuth } from "../../../context/useAuth.ts";
 
 const LIKED_COLOR = "#fb4d6d";
@@ -23,10 +23,15 @@ export default function CommentItem({
   comment,
   postId,
   postOwnerId,
+  // A reply rendered inside its parent has no Reply button and fetches no
+  // replies of its own — the UI supports exactly one reply level, which is
+  // what it can display (the API has no read path for replies to replies).
+  nested = false,
 }: {
   comment: Comment;
   postId: string;
   postOwnerId: string;
+  nested?: boolean;
 }) {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -88,6 +93,16 @@ export default function CommentItem({
     queryClient.invalidateQueries({ queryKey: ["post", postId] });
   };
 
+  // Replies live on their own endpoint (GET .../comments/:id/replies) — the
+  // comments list never contains them. Top-level items fetch theirs here;
+  // nested replies don't (one reply level, by design).
+  const repliesQuery = useQuery({
+    queryKey: ["replies", postId, comment._id],
+    queryFn: () => getReplies(postId, comment._id),
+    enabled: !nested,
+  });
+  const replies = repliesQuery.data?.data.replies ?? [];
+
   const likeMutation = useMutation({
     mutationFn: () => likeComment(postId, comment._id),
     onSuccess: refresh,
@@ -112,15 +127,16 @@ export default function CommentItem({
     },
   });
 
-  // Replies are created with the same endpoint, passing this comment as
-  // parentComment — the API threads them under it.
+  // Replies go to the dedicated /replies endpoint — the create-comment
+  // endpoint rejects a parentComment field outright.
   const replyMutation = useMutation({
     mutationFn: (req: { content: string; image?: File | null }) =>
-      createComment(postId, { content: req.content, image: req.image ?? null, parentComment: comment._id }),
+      createReply(postId, comment._id, { content: req.content, image: req.image ?? null }),
     onSuccess: () => {
       setReplyContent("");
       setReplyImage(null);
       setReplying(false);
+      queryClient.invalidateQueries({ queryKey: ["replies", postId, comment._id] });
       refresh();
     },
     onError: () =>
@@ -242,7 +258,7 @@ export default function CommentItem({
           <Heart size={16} color={liked ? LIKED_COLOR : undefined} fill={liked ? LIKED_COLOR : "none"} />
         </ActionIcon>
         <Text size="sm">{likesCount}</Text>
-        {!editing && (
+        {!editing && !nested && (
           <Button
             variant="subtle"
             size="xs"
@@ -318,6 +334,15 @@ export default function CommentItem({
             )}
           </Stack>
         </form>
+      )}
+      {!nested && replies.length > 0 && (
+        <Box ml="xl" pl="md" mt="sm" style={{ borderLeft: "2px solid var(--mantine-color-default-border)" }}>
+          <Stack gap="sm">
+            {replies.map((reply) => (
+              <CommentItem key={reply._id} comment={reply} postId={postId} postOwnerId={postOwnerId} nested />
+            ))}
+          </Stack>
+        </Box>
       )}
     </Card>
   );

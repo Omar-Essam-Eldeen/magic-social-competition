@@ -33,14 +33,19 @@ function formatRelativeTime(value?: string): string {
 /** Human text for a notification type; unknown types are prettified. */
 function notificationText(type: string): string {
   switch (type) {
+    // Real type values seen live from the API: like_post, comment_post,
+    // follow_user. The bare forms are kept as fallbacks.
     case "like_post":
       return "liked your post";
     case "like_comment":
       return "liked your comment";
+    case "comment_post":
     case "comment":
       return "commented on your post";
+    case "follow_user":
     case "follow":
       return "started following you";
+    case "share_post":
     case "share":
       return "shared your post";
     default:

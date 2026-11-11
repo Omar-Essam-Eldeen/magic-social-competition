@@ -41,6 +41,7 @@ const PAGE_TITLES: Record<string, string> = {
   "/signup": "Sign up — Magic Social",
   "/profile": "Profile — Magic Social",
   "/bookmarks": "Saved — Magic Social",
+  "/notifications": "Notifications — Magic Social",
 };
 
 /** Right-rail mini profile: avatar, name, @username, Posts count, link to /profile. */
@@ -201,7 +202,7 @@ export default function App() {
       <AppShell.Aside p="md">
         <Stack gap="md">
           <ProfileMiniCard />
-          <SuggestionsCard />
+          {user && <SuggestionsCard />}
           <Card padding="md">
             <Title order={4} mb="xs">
               About Magic Social

@@ -1,24 +1,13 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Box, Button, Container, Group, Skeleton, Stack, Text, TextInput } from "@mantine/core";
+import { Alert, Button, Container, Group, Skeleton, Stack, Text, TextInput } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { getPost } from "../../api/Posts/api.ts";
 import { createComment, getComments } from "../../api/Posts/Comments/api.ts";
-import type { Comment, CreateCommentReq } from "../../api/Posts/Comments/types.ts";
+import type { CreateCommentReq } from "../../api/Posts/Comments/types.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
 import CommentItem from "../../components/Posts/Comments/CommentItem.tsx";
-
-/**
- * The parent of a comment: `parentComment` comes back from the API either
- * as a bare id string or as a populated comment object — normalise both
- * to the id (null for a top-level comment).
- */
-function parentIdOf(comment: Comment): string | null {
-  const parent = comment.parentComment;
-  if (!parent) return null;
-  return typeof parent === "string" ? parent : parent._id;
-}
 
 export default function PostDetails() {
   const { id } = useParams();
@@ -96,18 +85,8 @@ export default function PostDetails() {
     );
   }
   const comments = commentsQuery.data?.data.comments ?? [];
-  // Threading: top-level comments have no parent; every other comment is
-  // a reply to the comment whose _id matches its parentComment.
-  const topLevelComments = comments.filter((comment) => parentIdOf(comment) === null);
-  const repliesFor = (parent: Comment) =>
-    comments.filter((comment) => parentIdOf(comment) === parent._id);
-  // A reply whose parent is missing (deleted parent) would otherwise
-  // vanish — show it at top level so no comment is ever hidden.
-  const orphanReplies = comments.filter(
-    (comment) =>
-      parentIdOf(comment) !== null && !comments.some((c) => c._id === parentIdOf(comment)),
-  );
-  const visibleTopLevel = [...topLevelComments, ...orphanReplies];
+  // The comments list holds top-level comments only — each CommentItem
+  // fetches and renders its own replies from the /replies endpoint.
 
   return (
     <Container size={640} px="md">
@@ -150,23 +129,9 @@ export default function PostDetails() {
           <Text c="dimmed">No comments yet — be the first.</Text>
         ) : (
           <Stack gap="sm">
-            {visibleTopLevel.map((comment) => {
-              const replies = repliesFor(comment);
-              return (
-                <Stack key={comment._id} gap="sm">
-                  <CommentItem comment={comment} postId={postId} postOwnerId={post.user._id} />
-                  {replies.length > 0 && (
-                    <Box ml="xl" pl="md" style={{ borderLeft: "2px solid var(--mantine-color-default-border)" }}>
-                      <Stack gap="sm">
-                        {replies.map((reply) => (
-                          <CommentItem key={reply._id} comment={reply} postId={postId} postOwnerId={post.user._id} />
-                        ))}
-                      </Stack>
-                    </Box>
-                  )}
-                </Stack>
-              );
-            })}
+            {comments.map((comment) => (
+              <CommentItem key={comment._id} comment={comment} postId={postId} postOwnerId={post.user._id} />
+            ))}
           </Stack>
         )}
       </Stack>
