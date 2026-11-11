@@ -92,7 +92,8 @@ export default function Notifications() {
     <Container size={640} px="md">
       <Stack gap="md">
         <Group justify="space-between" align="center">
-          <Title order={2} ff="Sora, system-ui, sans-serif">
+          {/* Page heading: h1, kept at the h2 visual size. */}
+          <Title order={1} fz="var(--mantine-h2-font-size)" lh="var(--mantine-h2-line-height)" ff="Sora, system-ui, sans-serif">
             {t.notifications.title}
           </Title>
           {unreadCount > 0 && (
@@ -131,10 +132,14 @@ export default function Notifications() {
               const action = notificationText(t, notification.type);
               const actorName = actor?.name ?? t.notifications.someone;
               return (
+                // No aria-label: the row's visible content IS its name.
+                // An aria-label here failed WCAG 2.5.3 (label-in-name) —
+                // the visible text is name + action + time as separate
+                // nodes, and any label that rewords it (comma, avatar
+                // fallback) stops containing the visible text verbatim.
                 <UnstyledButton
                   key={notification._id}
-                  onClick={() => handleRowClick(notification)}
-                  aria-label={t.notifications.rowAria(actorName, action, relativeTime)}>
+                  onClick={() => handleRowClick(notification)}>
                   <Card
                     padding="sm"
                     withBorder={!notification.isRead}
@@ -155,7 +160,10 @@ export default function Notifications() {
                           {action}
                         </Text>
                         {relativeTime && (
-                          <Text size="xs" c="dimmed">
+                          // Unread rows sit on a violet-light background,
+                          // where dimmed (#6b7280) is only 3.66:1 — use the
+                          // scheme-aware unread-time token (6.2:1 light).
+                          <Text size="xs" c={notification.isRead ? "dimmed" : "var(--notification-unread-time)"}>
                             {relativeTime}
                           </Text>
                         )}

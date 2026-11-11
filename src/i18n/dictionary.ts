@@ -152,7 +152,10 @@ export const en = {
     sharesAria: (count: number): string => `${count} shares`,
     bookmarkAria: "Bookmark post",
     removeBookmarkAria: "Remove bookmark",
-    viewLikersAria: (count: number): string => `View who liked this post (${count} likes)`,
+    // No parentheses around the count: axe strips parentheticals before
+    // comparing the accessible name with the visible count text, so
+    // "(0 likes)" made the visible "0" disappear from the name.
+    viewLikersAria: (count: number): string => `${count} likes — view who liked this post`,
     likedByTitle: "Liked by",
     likersLoadErrorTitle: "Couldn't load who liked this post",
     noLikes: "No likes yet.",
@@ -160,7 +163,10 @@ export const en = {
     viewProfile: (name: string): string => `View ${name}'s profile`,
     photoAlt: (name: string): string => `Photo in a post by ${name}`,
     viewFullPhoto: (alt: string): string => `View full ${alt}`,
-    topCommentAria: (author: string): string => `Top comment by ${author}: view post`,
+    // The visible card text is "author: content", so the accessible name
+    // must contain the content too (WCAG 2.5.3 label-in-name).
+    topCommentAria: (author: string, content: string): string => `Top comment by ${author}: ${content} — view post`,
+    detailsHeading: (name: string): string => `Post by ${name}`,
     privacyPublic: "Public",
     privacyFriends: "Friends",
     privacyOnlyMe: "Only me",
@@ -429,7 +435,7 @@ export const ar: Dict = {
     bookmarkAria: "حفظ المنشور",
     removeBookmarkAria: "إزالة الحفظ",
     viewLikersAria: (count: number): string =>
-      `عرض من أعجبهم هذا المنشور (${arPlural(count, "إعجاب واحد", "إعجابان", "إعجابات", "إعجابًا")})`,
+      `${count} ${arPlural(count, "إعجاب واحد", "إعجابان", "إعجابات", "إعجابًا")} — عرض من أعجبهم هذا المنشور`,
     likedByTitle: "أعجب به",
     likersLoadErrorTitle: "تعذّر تحميل من أعجبهم هذا المنشور",
     noLikes: "لا توجد إعجابات بعد.",
@@ -437,7 +443,8 @@ export const ar: Dict = {
     viewProfile: (name: string): string => `عرض الملف الشخصي لـ ${name}`,
     photoAlt: (name: string): string => `صورة في منشور لـ ${name}`,
     viewFullPhoto: (alt: string): string => `عرض ${alt} بالحجم الكامل`,
-    topCommentAria: (author: string): string => `أبرز تعليق لـ ${author}: عرض المنشور`,
+    topCommentAria: (author: string, content: string): string => `أبرز تعليق لـ ${author}: ${content} — عرض المنشور`,
+    detailsHeading: (name: string): string => `منشور لـ ${name}`,
     privacyPublic: "عام",
     privacyFriends: "الأصدقاء",
     privacyOnlyMe: "أنا فقط",

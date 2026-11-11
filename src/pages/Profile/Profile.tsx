@@ -156,7 +156,8 @@ export default function Profile() {
               }}>
               {user.name?.[0] ?? "?"}
             </Avatar>
-            <Title order={3} ff="Sora, system-ui, sans-serif" mt="sm">
+            {/* Page heading: h1, kept at the h3 visual size. */}
+            <Title order={1} fz="var(--mantine-h3-font-size)" lh="var(--mantine-h3-line-height)" ff="Sora, system-ui, sans-serif" mt="sm">
               {user.name}
             </Title>
             <Text c="dimmed">
@@ -173,7 +174,6 @@ export default function Profile() {
               <Count value={user.followingCount ?? 0} label={t.common.followingCount} />
             </Group>
             <FileInput
-              aria-label={t.profile.changePhotoAria}
               placeholder={t.profile.changePhotoPlaceholder}
               accept="image/*"
               clearable
@@ -236,7 +236,8 @@ export default function Profile() {
         </Card>
 
         <Card padding="lg">
-          <Title order={4} mb="sm">
+          {/* h2 (was h4 — skipped a level after the h1 above), kept at the h4 visual size. */}
+          <Title order={2} fz="var(--mantine-h4-font-size)" lh="var(--mantine-h4-line-height)" mb="sm">
             {t.profile.changePasswordTitle}
           </Title>
           {success && (

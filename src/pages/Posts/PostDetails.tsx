@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Alert, Button, Container, Group, Skeleton, Stack, Text, TextInput } from "@mantine/core";
+import { Alert, Button, Container, Group, Skeleton, Stack, Text, TextInput, VisuallyHidden } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { getPost } from "../../api/Posts/api.ts";
 import { createComment, getComments } from "../../api/Posts/Comments/api.ts";
@@ -93,6 +93,10 @@ export default function PostDetails() {
   return (
     <Container size={640} px="md">
       <Stack gap="md">
+        {/* Page heading: visually hidden — the post card has no visible title. */}
+        <VisuallyHidden>
+          <h1>{t.post.detailsHeading(post.user.name)}</h1>
+        </VisuallyHidden>
         <PostCard post={post} />
 
         <Text fw={600} size="lg">

@@ -223,7 +223,6 @@ export default function CommentItem({
             )
           )}
           <FileInput
-            aria-label={t.comment.changeImageAria}
             placeholder={t.comment.changeImagePlaceholder}
             accept="image/*"
             value={image}

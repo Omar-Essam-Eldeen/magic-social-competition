@@ -375,3 +375,138 @@ accounts; all test state restored. Results:
   the screenshots; the downloaded webp is valid). Zero page errors in every run.
 - Final state: `npm run build` GREEN (2.59s), `npm run lint` exit 0.
   Phase 4 visual verification: PASS.
+
+## Phase 5 — wiring + performance + a11y (2026-11-11)
+
+### PWA wiring (per PWA-SETUP.md steps 1, 2, 4 verbatim)
+- `npm install -D vite-plugin-pwa` (devDependency; package.json + lock updated).
+- `vite.config.ts` replaced with the spec's VitePWA block (`manifest: false`,
+  `injectRegister: false`, `registerType: "autoUpdate"`, workbox glob
+  `**/*.{js,css,html,png,webp}`) PLUS code splitting in the same file.
+- `src/main.tsx`: `import { registerSW } from "virtual:pwa-register"` +
+  `registerSW({ immediate: true })` before createRoot.
+- New file `src/vite-env.d.ts` (`/// <reference types="vite/client" />` +
+  `/// <reference types="vite-plugin-pwa/client" />`) — required, otherwise
+  `tsc` fails with TS2307 "Cannot find module 'virtual:pwa-register'".
+- Manifest `<link>` was already in index.html (README agent) — verified present,
+  not duplicated.
+
+### Theme-color decision (exception to PWA-SETUP.md §3)
+- Did NOT change index.html theme-color to #8b5cf6. The README agent's
+  light/dark media pair (#f7f8fa / #0e1013, matching the actual page
+  backgrounds) is correct and stays as-is. The manifest's theme_color
+  #8b5cf6 (splash screen) also stays as-is. The single-colour #8b5cf6
+  meta would have painted the browser chrome violet in both schemes,
+  mismatching the page background.
+
+### Code splitting — chunk sizes before / after
+- BEFORE: single JS chunk `index 774.62 kB` (gzip 230.62 kB) + the
+  ">500 kB chunk" warning. CSS 250.30 kB.
+- AFTER (manualChunks on node_modules): `index 79.52 kB` (gzip 20.20 kB),
+  `vendor-react 244.89 kB` (gzip 78.00 kB — react, react-dom,
+  react-router-dom, react-router, scheduler), `vendor-mantine 210.09 kB`
+  (gzip 60.44 kB — @mantine/*), `vendor-lib 248.45 kB` (gzip 76.98 kB —
+  everything else: @tanstack/react-query, axios, date-fns, zod,
+  react-hook-form, lucide-react). No chunk over 500 kB, warning gone.
+  Largest chunk is now 248.45 kB (was 774.62 kB, −68%).
+- Smoke: production build + `vite preview` — landing, login, feed,
+  post details, profile, notifications all render; 0 failed requests,
+  0 console errors (Playwright/Firefox). Note: `vite preview` binds
+  `[::1]:4173` by default in this VM — the harness needs
+  `--host 127.0.0.1` or Firefox gets connection-refused on 127.0.0.1.
+
+### Lazy images — audit (no code change needed)
+- Every below-the-fold content `<Image>` already had `loading="lazy"`:
+  post images + shared-post images + edit previews (PostCard), comment
+  images + edit previews (CommentItem), composer preview (Composer).
+- Deliberately NOT lazy: `Brand.tsx` logo (landing hero / header, eager
+  by design) and the PostCard lightbox image (user-opened modal, visible
+  on open). Profile/UserProfile cover photos are CSS `background-image`
+  on a `<Box>` (above the fold on those pages) — not lazy-loadable as
+  `<img>`, no change.
+
+### Accessibility — axe-core 4.14 (@axe-core/playwright in the harness
+### only: ~/workspace/predeploy/visual-verify, NOT the app's package.json)
+- Pages scanned, light mode, desktop 1280×900, logged in as throwaway
+  @testmagic99/Test1234! for the authed pages.
+- BEFORE (first run): landing 1, login 1, signup 1, feed 3, profile 3,
+  notifications 3 (post details unscanned — harness looked for
+  `a[href^="/posts/"]`, but cards navigate via onClick; fixed harness
+  to click the first post's comments button).
+- AFTER (re-run after fixes): **0 violations on all 7 pages**
+  (landing, login, signup, feed, post details, profile, notifications).
+- Violations found + fixed (all ours, none from Mantine internals):
+  1. `heading-order` (landing): feature cards were h4 straight after the
+     h1. Fix: cards → h2, visual size pinned with
+     `fz/lh="var(--mantine-h4-…)"` (Landing.tsx).
+  2. `page-has-heading-one` (login, signup, feed, post details, profile,
+     notifications): no h1 anywhere. Fix: promoted each page's main
+     Title to h1 with fz/lh pinned to its old size (Login, Signup,
+     Notifications, Profile name h3→h1 + change-password h4→h2 so the
+     order stays valid); added a visually-hidden h1 where the page has
+     no visible title (feed: `t.nav.home`; post details: new
+     `t.post.detailsHeading(name)` — "Post by {name}" / "منشور لـ {name}",
+     added to EN + AR dictionaries).
+  3. `color-contrast` (feed + profile): Mantine FileInput placeholder
+     #adb5bd on white = 2.07:1. Fix: `--mantine-color-placeholder`
+     overridden in themeVariables — light #5c5f66 (~6.4:1 on white),
+     dark #a9adb3 (~7.7:1 on #171a20). Verified in both schemes.
+  4. `color-contrast` (notifications): dimmed timestamp #6b7280 on the
+     violet-light unread background = 3.66:1. Fix: new scheme-aware
+     `--notification-unread-time` token (light #495057 = 6.2:1 on
+     #e5dbff; dark #9aa0aa = 5.33:1 on the dark unread bg, verified).
+  5. `label-content-name-mismatch` (17 nodes, feed/profile/notifications):
+     - Language toggle: visible text "عربي"/"EN" wasn't in aria-label
+       "Switch to Arabic". Fix: label now leads with the visible text
+       ("عربي — Switch to Arabic").
+     - Likers count button: visible "0" vs aria-label "View who liked
+       this post (0 likes)" — axe strips parentheticals before
+       comparing, so the count vanished from the name. Fix:
+       `viewLikersAria` no longer uses parentheses and leads with the
+       count ("0 likes — view who liked this post", AR likewise with
+       the digit first).
+     - Top-comment card: visible "author: content" vs aria-label
+       "Top comment by author: view post" (no content). Fix:
+       `topCommentAria(author, content)` now includes the content.
+     - Notification rows: aria-label reworded the visible text (comma,
+       avatar fallback), so it stopped containing it verbatim. Fix:
+       removed the aria-label — the row's visible content IS its name.
+     - Profile/PostCard/CommentItem edit FileInputs: aria-label
+       ("Change profile/post/comment image") vs visible placeholder
+       ("Change photo"/"Change image (optional)") — same latent
+       mismatch, fixed by removing the aria-label so the placeholder
+       text is the name. (Composer's FileInput already passed and is
+       untouched.)
+- Keyboard walk (Playwright Tab, light mode): login form — all 10
+  focusable elements reachable, every stop shows a visible 2px violet
+  focus ring; feed — all 30 stops in the walk show a ring, including
+  the composer textarea, the "Add an image" FileInput button and the
+  first post's like/comment/share/bookmark actions.
+  - Root cause found: Mantine's `.m_8fb7ebe7:focus { outline: none }`
+    (0,2,0) outranked the global `:focus-visible` rule (0,1,0), and the
+    theme's input `border` shorthand swallows Mantine's focus
+    border-colour change — so focused text inputs/textareas/FileInput
+    buttons had NO visible focus indicator at all. Fix (app.css):
+    element-qualified `input/textarea/select/button.mantine-Input-input:
+    focus-visible` outline rule (0,2,1), which beats Mantine's rule
+    regardless of stylesheet order. Verified in light + dark.
+
+### PWA end-to-end verification (production build + vite preview :4173)
+- curl: manifest 200 `application/manifest+json`; icon-192, icon-512,
+  icon-512-maskable all 200 `image/png`; sw.js 200 `text/javascript`;
+  index 200 `text/html`. Manifest body verified (name "Magic Social",
+  3 icons, theme_color #8b5cf6).
+- Playwright/Firefox: `navigator.serviceWorker` supported; registration
+  present, scope `http://127.0.0.1:4173/`, worker state `activated` on
+  first load; after reload `navigator.serviceWorker.controller` is
+  `true` (worker controls the page). `dist/` contains `sw.js` +
+  `workbox-*.js`; precache 14 entries (3391.79 KiB).
+- 0 console errors, 0 failed requests across all 7 scanned pages.
+  (The "Image corrupt or truncated" R2 webp console note seen in
+  Phases 2–4 did not appear in this run.)
+
+### Final state
+- `npm run build` GREEN (tsc + vite, 2.80s, PWA files generated).
+- `npm run lint` exit 0.
+- Phase 5 visual/a11y verification: PASS (axe 0 violations, keyboard
+  rings on every stop, PWA verified end-to-end).

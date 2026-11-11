@@ -46,7 +46,8 @@ export default function Login() {
         <Center mb="md">
           <LogoMark size={48} />
         </Center>
-        <Title order={2} ta="center" mb="md">
+        {/* Page heading: h1, kept at the h2 visual size. */}
+        <Title order={1} fz="var(--mantine-h2-font-size)" lh="var(--mantine-h2-line-height)" ta="center" mb="md">
           {t.auth.welcomeBack}
         </Title>
 

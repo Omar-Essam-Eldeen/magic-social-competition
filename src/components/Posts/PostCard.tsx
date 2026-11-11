@@ -262,7 +262,6 @@ export default function PostCard({ post }: { post: Post }) {
             )
           )}
           <FileInput
-            aria-label={t.post.changeImageAria}
             placeholder={t.post.changeImagePlaceholder}
             accept="image/*"
             value={image}
@@ -346,7 +345,7 @@ export default function PostCard({ post }: { post: Post }) {
           }}
           tabIndex={0}
           role="button"
-          aria-label={t.post.topCommentAria(topCommentAuthor)}>
+          aria-label={t.post.topCommentAria(topCommentAuthor, topComment.content)}>
           <Text size="sm">
             <Text span fw={700}>
               {topCommentAuthor}:{" "}

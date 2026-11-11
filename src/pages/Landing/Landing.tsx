@@ -68,7 +68,8 @@ export default function Landing() {
               <ThemeIcon variant="light" size="lg" radius="md" mb="sm" aria-hidden="true">
                 <Icon size={20} />
               </ThemeIcon>
-              <Title order={4} mb="xs">
+              {/* h2 (was h4 — skipped h2/h3 after the h1 above), kept at the h4 visual size. */}
+              <Title order={2} fz="var(--mantine-h4-font-size)" lh="var(--mantine-h4-line-height)" mb="xs">
                 {title}
               </Title>
               <Text size="sm" c="dimmed">

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { ActionIcon, Alert, Button, Container, SegmentedControl, Skeleton, Stack, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Alert, Button, Container, SegmentedControl, Skeleton, Stack, Text, TextInput, VisuallyHidden } from "@mantine/core";
 import { X } from "lucide-react";
 import { getAllPosts, getFeed } from "../../api/Posts/api.ts";
 import type { FeedFilter } from "../../api/Posts/types.ts";
@@ -92,6 +92,10 @@ export default function Home() {
   return (
     <Container size={640} px="md">
       <Stack gap="md">
+        {/* Page heading: visually hidden — the feed has no visible title. */}
+        <VisuallyHidden>
+          <h1>{t.nav.home}</h1>
+        </VisuallyHidden>
         <TextInput
           aria-label={t.search.ariaLabel}
           placeholder={t.search.placeholder}

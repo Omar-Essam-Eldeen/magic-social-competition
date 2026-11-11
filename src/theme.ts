@@ -98,7 +98,10 @@ export const theme = createTheme({
   },
 });
 
-// Minimal resolver: only the locked page/card/border/text/dimmed tokens.
+// Minimal resolver: only the locked page/card/border/text/dimmed tokens,
+// plus the input placeholder colour (Mantine's default #adb5bd is 2.07:1
+// on white — fails WCAG AA) and the unread-notification timestamp colour
+// (dimmed #6b7280 is 3.66:1 on the violet-light unread background).
 // Light: page #f7f8fa, card #ffffff, border #e6e8ec, text #17181c, dimmed #6b7280.
 // Dark: page #0e1013, card #171a20, border rgba(255,255,255,0.08), text #f2f3f5, dimmed #9aa0aa.
 export const themeVariables: CSSVariablesResolver = () => ({
@@ -109,6 +112,8 @@ export const themeVariables: CSSVariablesResolver = () => ({
     "--mantine-color-default-border": "#e6e8ec",
     "--mantine-color-text": "#17181c",
     "--mantine-color-dimmed": "#6b7280",
+    "--mantine-color-placeholder": "#5c5f66",
+    "--notification-unread-time": "#495057",
   },
   dark: {
     "--mantine-color-body": "#0e1013",
@@ -116,5 +121,7 @@ export const themeVariables: CSSVariablesResolver = () => ({
     "--mantine-color-default-border": "rgba(255, 255, 255, 0.08)",
     "--mantine-color-text": "#f2f3f5",
     "--mantine-color-dimmed": "#9aa0aa",
+    "--mantine-color-placeholder": "#a9adb3",
+    "--notification-unread-time": "#9aa0aa",
   },
 });

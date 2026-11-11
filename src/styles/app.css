@@ -11,6 +11,20 @@
   border-radius: 6px;
 }
 
+/* Mantine inputs kill the outline on :focus (`.m_8fb7ebe7:focus {
+   outline: none }`), which outranks the global :focus-visible rule —
+   so focused text inputs, textareas and FileInput buttons had NO visible
+   focus indicator at all (the theme's border shorthand also swallows
+   Mantine's focus border-colour change). Element-qualified, so this
+   (0,2,1) beats Mantine's (0,2,0) regardless of stylesheet order. */
+input.mantine-Input-input:focus-visible,
+textarea.mantine-Input-input:focus-visible,
+select.mantine-Input-input:focus-visible,
+button.mantine-Input-input:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+}
+
 /* Like-button pop: short scale bounce on tap. */
 @keyframes like-pop {
   0% {
