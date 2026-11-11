@@ -1,4 +1,5 @@
 import type { AllPostsResponse, ApiResponse, Meta, Post, ProfileResponse, SuggestionUser, User } from "../../types.ts";
+import type { FollowResponse } from "./types.ts";
 import { api } from "../client.ts";
 // ================= Extras =================
 // GET /users/bookmarks — your saved posts
@@ -25,8 +26,10 @@ export async function getSuggestions(): Promise<ApiResponse<SuggestionUser[]>> {
   return { success: data.success, message: data.message, meta: data.meta, data: data.data.suggestions };
 }
 // PUT /users/:userId/follow — follow toggle
-export async function followUser(userId: string): Promise<ApiResponse<User>> {
-  const { data } = await api.put<ApiResponse<User>>(`/users/${userId}/follow`);
+// Live-verified 2026-11-11: returns data: { following, followersCount },
+// NOT a User — the response tells you the new follow state.
+export async function followUser(userId: string): Promise<ApiResponse<FollowResponse>> {
+  const { data } = await api.put<ApiResponse<FollowResponse>>(`/users/${userId}/follow`);
   return data;
 }
 // GET /users/:userId/profile — another user's profile

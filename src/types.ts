@@ -136,22 +136,3 @@ export interface ProfileResponse {
   message: string;
   data: User;
 }
-
-// ---------- Notifications (no feature folder yet) ----------
-// These stay global until a Notifications feature exists —
-// then they move to src/api/Notifications/types.ts.
-export interface Notification {
-  _id: string;
-  content?: string;
-  sender?: User;
-  post?: string;
-  createdAt: string;
-  isRead: boolean;
-}
-
-export interface NotificationsResponse {
-  success: boolean;
-  message: string;
-  data: { notifications: Notification[] };
-  meta?: Meta;
-}
