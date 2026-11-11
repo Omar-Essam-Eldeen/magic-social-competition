@@ -216,3 +216,19 @@ accounts; all test state restored. Results:
   contrast); the earlier localStorage-seed method was invalid for
   `defaultColorScheme="auto"`, which follows the OS preference.
 - Phase 2 visual verification: PASS. Build green, lint exit 0.
+
+## Phase 3 — Wave 1: API layer (2026-11-11, completed)
+
+- Commit 82d534c "Phase 3: notifications API + honest follow type".
+- New src/api/Notifications/api.ts + types.ts: getNotifications (unwraps
+  data.notifications, keeps pagination), getUnreadCount, markNotificationRead,
+  markAllNotificationsRead. Type named NotificationItem (not Notification,
+  avoids shadowing the DOM global). Entry shape verified live incl. an extra
+  field the prep probing missed: optional readAt.
+- Old wrong Notification/NotificationsResponse deleted from src/types.ts.
+- followUser now returns ApiResponse<FollowResponse> ({ following,
+  followersCount }); zero existing callers.
+- Liker + SuggestionUser types re-verified live against real entries —
+  exact matches, no fixes needed. PATCH read/read-all NOT re-probed (prep
+  already verified them; no unread notifications to test against).
+- Build green, lint exit 0. Next: Wave 2 UI agents (file-partitioned).
