@@ -24,6 +24,9 @@ export default function Profile() {
     enabled: !!user?._id,
   });
   const posts = postsQuery.data?.data.posts ?? [];
+  // The API reports the total across all pages; the loaded page only holds
+  // the first few, so prefer the server total when it is present.
+  const totalPosts = postsQuery.data?.meta?.pagination?.total ?? posts.length;
 
   const {
     handleSubmit,
@@ -139,9 +142,16 @@ export default function Profile() {
           </form>
         </Card>
 
-        <Title order={4}>My posts ({posts.length})</Title>
+        <Title order={4}>My posts ({totalPosts})</Title>
         {postsQuery.isPending ? (
           <Skeleton height={160} radius="md" />
+        ) : postsQuery.isError ? (
+          <Alert color="red" title="Couldn't load your posts">
+            <Text size="sm" mb="sm">
+              Check your connection and try again.
+            </Text>
+            <Button onClick={() => postsQuery.refetch()}>Retry</Button>
+          </Alert>
         ) : posts.length === 0 ? (
           <Text c="dimmed">You haven&apos;t posted anything yet.</Text>
         ) : (

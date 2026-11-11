@@ -1,4 +1,4 @@
-import type { AllPostsResponse, ApiResponse, Post, User } from "../../types.ts";
+import type { AllPostsResponse, ApiResponse, Liker, Meta, Post } from "../../types.ts";
 import type { CreatePostReq, FeedFilter, UpdatePostReq } from "./types.ts";
 import { api } from "../client.ts";
 // ================= Posts =================
@@ -11,8 +11,11 @@ export async function getAllPosts(page = 1, limit = 10): Promise<AllPostsRespons
 }
 // GET /posts/:postId — one post's details
 export async function getPost(postId: string): Promise<ApiResponse<Post>> {
-  const { data } = await api.get<ApiResponse<Post>>(`/posts/${postId}`);
-  return data;
+  // The endpoint may nest the post one level deeper ({ data: { post: {...} } })
+  // and may omit the likes array — unwrap it here so callers get a plain Post.
+  const { data } = await api.get<ApiResponse<Post | { post: Post }>>(`/posts/${postId}`);
+  const post = "post" in data.data ? data.data.post : data.data;
+  return { ...data, data: post };
 }
 // POST /posts — create a post (text + optional image)
 export async function createPost(post: CreatePostReq): Promise<ApiResponse<Post>> {
@@ -52,10 +55,17 @@ export async function likePost(postId: string): Promise<ApiResponse<Post>> {
   const { data } = await api.put<ApiResponse<Post>>(`/posts/${postId}/like`);
   return data;
 }
-// GET /posts/:postId/likers — who liked it
-export async function getPostLikers(postId: string): Promise<ApiResponse<User[]>> {
-  const { data } = await api.get<ApiResponse<User[]>>(`/posts/${postId}/likers`);
-  return data;
+// GET /posts/:postId/likes — who liked it
+// Live-verified 2026-11-11: the path is /likes, NOT /likers (that 404s).
+// Returns data: { likes: [...] } with pagination.
+export async function getPostLikers(postId: string): Promise<ApiResponse<Liker[]>> {
+  const { data } = await api.get<{
+    success: boolean;
+    message: string;
+    meta?: Meta;
+    data: { likes: Liker[] };
+  }>(`/posts/${postId}/likes`);
+  return { success: data.success, message: data.message, meta: data.meta, data: data.data.likes };
 }
 // PUT /posts/:postId/bookmark — bookmark toggle
 export async function bookmarkPost(postId: string): Promise<ApiResponse<Post>> {

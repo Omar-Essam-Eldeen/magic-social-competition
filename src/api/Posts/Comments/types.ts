@@ -13,5 +13,5 @@ export interface AllCommentsResponse {
   success: boolean;
   message: string;
   data: { comments: Comment[] };
-  meta: Meta;
+  meta?: Meta;
 }

@@ -1,4 +1,4 @@
-import type { AllPostsResponse, ApiResponse, Meta, Post, ProfileResponse, User } from "../../types.ts";
+import type { AllPostsResponse, ApiResponse, Meta, Post, ProfileResponse, SuggestionUser, User } from "../../types.ts";
 import { api } from "../client.ts";
 // ================= Extras =================
 // GET /users/bookmarks — your saved posts
@@ -12,9 +12,17 @@ export async function getBookmarks(): Promise<AllPostsResponse> {
   return { success: data.success, message: data.message, meta: data.meta, data: { posts: data.data.bookmarks } };
 }
 // GET /users/suggestions — people to follow
-export async function getSuggestions(): Promise<ApiResponse<User[]>> {
-  const { data } = await api.get<ApiResponse<User[]>>("/users/suggestions");
-  return data;
+// Live-verified 2026-11-11: the API returns data: { suggestions: [...] },
+// NOT a bare array, and each suggestion carries mutualFollowersCount +
+// followersCount. Unwrap here so callers get a plain list.
+export async function getSuggestions(): Promise<ApiResponse<SuggestionUser[]>> {
+  const { data } = await api.get<{
+    success: boolean;
+    message: string;
+    meta?: Meta;
+    data: { suggestions: SuggestionUser[] };
+  }>("/users/suggestions");
+  return { success: data.success, message: data.message, meta: data.meta, data: data.data.suggestions };
 }
 // PUT /users/:userId/follow — follow toggle
 export async function followUser(userId: string): Promise<ApiResponse<User>> {
@@ -23,10 +31,10 @@ export async function followUser(userId: string): Promise<ApiResponse<User>> {
 }
 // GET /users/:userId/profile — another user's profile
 export async function getUserProfile(userId: string): Promise<ProfileResponse> {
-  const { data } = await api.get<ProfileResponse>(`/users/${userId}/profile`);
-  const raw = data.data as unknown;
-  const user = ((raw as { user?: User } | null)?.user ?? raw) as User;
-  return { ...data, data: user };
+  // Raw shape: the user is nested ({ data: { user: {...} } }) — unwrap
+  // it here so callers keep getting a plain User.
+  const { data } = await api.get<{ success: boolean; message: string; data: { user: User } }>(`/users/${userId}/profile`);
+  return { success: data.success, message: data.message, data: data.data.user };
 }
 // GET /users/:userId/posts — another user's posts
 export async function getUserPosts(userId: string): Promise<AllPostsResponse> {

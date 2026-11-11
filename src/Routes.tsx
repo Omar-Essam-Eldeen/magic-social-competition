@@ -1,4 +1,4 @@
-import { Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Auth/Login.tsx";
 import Signup from "./pages/Auth/Signup.tsx";
 import Home from "./pages/Home/Home.tsx";
@@ -22,7 +22,7 @@ export default function AppRoutes() {
         path="/signup"
         element={
           <GuestRoute>
-            <Signup />{" "}
+            <Signup />
           </GuestRoute>
         }
       />
@@ -58,6 +58,7 @@ export default function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }

@@ -43,6 +43,8 @@ export default function Signup() {
     } catch (err) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || "Something went wrong");
+      } else if (err instanceof Error && err.message) {
+        setError(err.message);
       } else {
         setError("Something went wrong");
       }

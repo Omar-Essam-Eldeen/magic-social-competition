@@ -2,12 +2,12 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Alert, Button, Container, Group, Skeleton, Stack, Text, TextInput } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { getPost } from "../../api/Posts/api.ts";
 import { createComment, getComments } from "../../api/Posts/Comments/api.ts";
 import type { CreateCommentReq } from "../../api/Posts/Comments/types.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
 import CommentItem from "../../components/Posts/Comments/CommentItem.tsx";
-import type { Post } from "../../types.ts";
 
 export default function PostDetails() {
   const { id } = useParams();
@@ -34,6 +34,8 @@ export default function PostDetails() {
       queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
+    onError: () =>
+      notifications.show({ color: "red", title: "Couldn't post your comment", message: "Try again." }),
   });
 
   if (!postId) {
@@ -67,14 +69,17 @@ export default function PostDetails() {
     );
   }
 
-  const rawData = postQuery.data.data as unknown;
-  const post = ((rawData as { post?: Post } | null)?.post ?? rawData) as Post | undefined;
+  // getPost unwraps the response in the API layer, so data is a plain Post.
+  const post = postQuery.data.data;
 
   if (!post || !post.user) {
     return (
       <Container size={640} px="md">
         <Alert color="red" title="Couldn't read this post">
           <Text size="sm">The server sent a shape this page doesn't understand yet.</Text>
+          <Button mt="sm" onClick={() => postQuery.refetch()}>
+            Retry
+          </Button>
         </Alert>
       </Container>
     );
@@ -87,7 +92,7 @@ export default function PostDetails() {
         <PostCard post={post} />
 
         <Text fw={600} size="lg">
-          Comments ({post.commentsCount})
+          Comments ({post.commentsCount ?? 0})
         </Text>
 
         <form
@@ -98,6 +103,7 @@ export default function PostDetails() {
           }}>
           <Group gap="xs" align="flex-end">
             <TextInput
+              aria-label="Write a comment"
               placeholder="Write a comment..."
               value={content}
               onChange={(e) => setContent(e.currentTarget.value)}

@@ -1,9 +1,21 @@
+import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "./context/useAuth";
-import { ActionIcon, AppShell, Button, Group, Text, Title, useMantineColorScheme } from "@mantine/core";
+import {
+  ActionIcon,
+  AppShell,
+  Button,
+  Group,
+  Text,
+  Title,
+  UnstyledButton,
+  useMantineColorScheme,
+} from "@mantine/core";
+import { modals } from "@mantine/modals";
 import { Bookmark, Home, MessageCircle, Moon, Sun, User } from "lucide-react";
 import AppRoutes from "./Routes.tsx";
 import Backdrop from "./components/Backdrop.tsx";
+import ErrorBoundary from "./components/ErrorBoundary.tsx";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", Icon: Home },
@@ -13,6 +25,14 @@ const NAV_ITEMS = [
 
 const BAR_SHADOW = "inset 0 1px 0 var(--glass-edge), 0 12px 32px -18px rgba(0, 0, 10, 0.5)";
 
+const PAGE_TITLES: Record<string, string> = {
+  "/": "Magic Social",
+  "/login": "Log in — Magic Social",
+  "/signup": "Sign up — Magic Social",
+  "/profile": "Profile — Magic Social",
+  "/bookmarks": "Saved — Magic Social",
+};
+
 export default function App() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === "dark";
@@ -21,9 +41,25 @@ export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  // Per-page document title, so tabs and history entries say where you are.
+  useEffect(() => {
+    const pathname = location.pathname;
+    document.title = pathname.startsWith("/posts/")
+      ? "Post — Magic Social"
+      : (PAGE_TITLES[pathname] ?? "Magic Social");
+  }, [location.pathname]);
+
   const handleLogout = () => {
-    logout();
-    navigate("/login");
+    modals.openConfirmModal({
+      title: "Log out?",
+      children: <Text size="sm">Are you sure you want to log out of Magic Social?</Text>,
+      labels: { confirm: "Log out", cancel: "Cancel" },
+      confirmProps: { color: "red" },
+      onConfirm: () => {
+        logout();
+        navigate("/login");
+      },
+    });
   };
 
   return (
@@ -39,17 +75,19 @@ export default function App() {
             boxShadow: BAR_SHADOW,
           }}>
           <Group h="100%" px="md" justify="space-between">
-            <Group gap="sm" style={{ cursor: "pointer" }} onClick={() => navigate("/")}>
-              <div className="brand-mark">
-                <MessageCircle size={21} color="#fff" />
-              </div>
-              <div>
-                <Title order={3} className="brand-name">
-                  Magic Social
-                </Title>
-                <Text className="brand-sub">Connect · Share</Text>
-              </div>
-            </Group>
+            <UnstyledButton aria-label="Magic Social — go to home" onClick={() => navigate("/")}>
+              <Group gap="sm">
+                <div className="brand-mark">
+                  <MessageCircle size={21} color="#fff" />
+                </div>
+                <div>
+                  <Title order={3} className="brand-name">
+                    Magic Social
+                  </Title>
+                  <Text className="brand-sub">Connect · Share</Text>
+                </div>
+              </Group>
+            </UnstyledButton>
             {user && (
               <Group gap="xs" visibleFrom="sm">
                 {NAV_ITEMS.map(({ to, label }) => (
@@ -82,7 +120,9 @@ export default function App() {
         </AppShell.Header>
 
         <AppShell.Main>
-          <AppRoutes />
+          <ErrorBoundary>
+            <AppRoutes />
+          </ErrorBoundary>
         </AppShell.Main>
 
         {user && (

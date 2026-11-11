@@ -9,7 +9,7 @@
 export interface APIResponse {
   success: boolean;
   message: string;
-  meta: Meta;
+  meta?: Meta;
 }
 
 // Generic wrapper, handy for any endpoint: ApiResponse<Post[]>, etc.
@@ -28,7 +28,7 @@ export interface Pagination {
   currentPage: number;
   numberOfPages: number;
   limit: number;
-  nextPage: number;
+  nextPage: number | null;
   total: number;
 }
 
@@ -38,8 +38,26 @@ export interface User {
   name: string;
   username: string;
   email?: string;
-  photo: string;
+  photo?: string | null;
   cover?: string;
+}
+
+// A user from GET /users/suggestions — the API adds follower counts.
+export interface SuggestionUser extends User {
+  mutualFollowersCount: number;
+  followersCount: number;
+}
+
+// A user from GET /posts/:postId/likes — the API adds counts.
+export interface Liker {
+  _id: string;
+  name: string;
+  username: string;
+  photo?: string | null;
+  followersCount: number;
+  followingCount: number;
+  bookmarksCount: number;
+  id: string;
 }
 
 export interface Post {
@@ -49,7 +67,7 @@ export interface Post {
   privacy: string;
   user: User;
   sharedPost?: SharedPost;
-  likes: string[];
+  likes?: string[];
   createdAt: string;
   commentsCount: number;
   topComment?: TopComment;
@@ -66,10 +84,10 @@ export interface SharedPost {
   privacy: string;
   user: User;
   sharedPost?: SharedPost | null;
-  likes: string[];
+  likes?: string[];
   createdAt: string;
   commentsCount: number;
-  topComment: TopComment;
+  topComment?: TopComment;
   sharesCount: number;
   likesCount: number;
   isShare: boolean;
@@ -83,7 +101,7 @@ export interface TopComment {
   commentCreator: CommentCreator;
   post: string;
   parentComment?: TopComment | string | null;
-  likes: string[];
+  likes?: string[];
   createdAt: string;
   image?: string;
 }

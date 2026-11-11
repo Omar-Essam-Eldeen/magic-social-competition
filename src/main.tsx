@@ -9,11 +9,18 @@ import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import App from "./App.tsx";
 import { theme, glassVariables } from "./theme.ts";
-import "./index.css";
 import "./styles/glass.css";
 import { AuthProvider } from "./context/AuthProvider.tsx";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+      staleTime: 30_000,
+    },
+  },
+});
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>

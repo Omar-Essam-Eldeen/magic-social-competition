@@ -2,6 +2,7 @@ import axios from "axios";
 // baseurl
 export const api = axios.create({
   baseURL: "https://route-posts.routemisr.com/",
+  timeout: 15000,
 });
 // auto send token headers on every request + bearer
 api.interceptors.request.use((config) => {

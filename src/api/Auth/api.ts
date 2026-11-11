@@ -1,5 +1,5 @@
 import { api } from "../client.ts";
-import type { AuthResponse, ChangePasswordReq, LoginDataReq, RegisterDataReq } from "./types.ts";
+import type { AuthResponse, ChangePasswordRequest, ChangePasswordResponse, LoginDataReq, RegisterDataReq } from "./types.ts";
 
 // ================= Auth =================
 // POST /users/signup — create account
@@ -13,11 +13,11 @@ export async function login(credentials: LoginDataReq): Promise<AuthResponse> {
   return data;
 }
 // PATCH /users/change-password — returns a NEW token, save it again on success
-export async function changePassword(body: ChangePasswordReq): Promise<AuthResponse> {
+export async function changePassword(body: ChangePasswordRequest): Promise<ChangePasswordResponse> {
   // The backend rejects "rePassword" — it only accepts the current
   // password and the new one. The confirm field stays in the form
   // (zod checks it matches), it just never leaves the browser.
   const { password, newPassword } = body;
-  const { data } = await api.patch<AuthResponse>("/users/change-password", { password, newPassword });
+  const { data } = await api.patch<ChangePasswordResponse>("/users/change-password", { password, newPassword });
   return data;
 }

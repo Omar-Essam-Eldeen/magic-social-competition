@@ -36,25 +36,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const res = await loginApi(credentials);
     if (!res.data?.token) throw new Error(res.message || "Login failed");
     localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
+    if (res.data.user) {
+      setUser(res.data.user);
+    } else {
+      // Defensive: signin should return a user, but if it doesn't,
+      // fetch the profile instead of setting undefined and bouncing to /login.
+      const profile = await getProfile();
+      setUser(profile.data);
+    }
   };
 
   const signup = async (data: RegisterDataReq) => {
     const res = await signupApi(data);
     if (!res.data?.token) throw new Error(res.message || "Signup failed");
     localStorage.setItem("token", res.data.token);
-    setUser(res.data.user);
+    if (res.data.user) {
+      setUser(res.data.user);
+    } else {
+      // Defensive: signup should return a user — fall back to the profile.
+      const profile = await getProfile();
+      setUser(profile.data);
+    }
   };
 
   // The API returns a NEW token — save it, or the next request logs you out.
+  // It returns NO user, so the current user is left untouched.
   const changePassword = async (body: ChangePasswordReq) => {
-    const res = await changePasswordApi(body);
+    const res = await changePasswordApi({ password: body.password, newPassword: body.newPassword });
     if (!res.data?.token) throw new Error(res.message || "Password change failed");
     localStorage.setItem("token", res.data.token);
-    // The endpoint returns a token but NO user object — only replace the
-    // user when one is actually returned, or this wipes the session and
-    // the app bounces to /login even though the change succeeded.
-    if (res.data.user) setUser(res.data.user);
   };
 
   const logout = () => {

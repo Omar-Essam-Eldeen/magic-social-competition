@@ -101,3 +101,43 @@ https://socialapp-seven-phi.vercel.app/
   (share, likers, suggestions endpoints + post-owner comment delete).
 - Verification after agents return: single `npm run build` + `npm run
   lint`, then targeted live/API checks per fix, then commit.
+
+## Phase 1 — Fix everything the audit found (COMPLETE 2026-11-11)
+
+- All 3 batches landed (API/types/auth; PostCard/Composer/CommentItem/
+  PostDetails; Home/Profile/Bookmarks/Routes/App/auth pages/theme/
+  index.html). Every audit finding fixed except the logged deferrals.
+- Build failure found during verification (NOT in the audit): `tsc -b`
+  failed on Home.tsx `fetchNextPage()` — "Type 'never' has no call
+  signatures". Root cause: TanStack Query 5.104 types every infinite-result
+  union member with `isFetchNextPageError: false` (literal), so calling
+  `fetchNextPage()` inside `{isFetchNextPageError && ...}` narrows the
+  result to `never` (TS destructured-discriminant narrowing). Fix: a
+  `retryNextPage` handler defined outside the narrowed branch; the button
+  calls it. Lesson logged: bare `npx tsc --noEmit` is VACUOUS in this
+  project (`tsconfig.json` has `"files": []`) — that is why all three
+  agents reported clean tsc while `tsc -b` failed. Verification must use
+  `npm run build` (tsc -b) or `tsc -b --force`, never bare `tsc --noEmit`.
+- Live/API verification (throwaway accounts, all test data cleaned up):
+  - N-38a suggestions VERIFIED: GET /users/suggestions returns
+    `data: { suggestions: [...] }` (10 users) — but the code typed it as a
+    bare array. FIXED: new `SuggestionUser` type (adds
+    mutualFollowersCount/followersCount) + getSuggestions unwraps to
+    `ApiResponse<SuggestionUser[]>`.
+  - N-38b likers: GET /posts/:postId/likers → "route not found" (the
+    documented path does not exist). Found live: the real path is
+    GET /posts/:postId/likes → `data: { likes: [...] }` with pagination;
+    verified with a real like (entry shape recorded) and unliked after.
+    FIXED: new `Liker` type + getPostLikers now calls `/likes` and unwraps.
+  - N-38c share VERIFIED: POST /posts/:postId/share works; test share
+    deleted after.
+  - N-39 post-owner comment delete VERIFIED: post owner CAN delete another
+    user's comment ("comment deleted successfully", 0 left). CommentItem's
+    canDelete logic is correct. Test post + comment deleted after.
+  - Postman doc fetch only returned the first 77 lines (health check);
+    the likers path was found by live probing instead, not by guessing.
+- Final state: `npm run build` GREEN (1.86s, JS 705 kB / 213 kB gzip —
+  slightly up from 690 kB, code splitting is Phase 5), `npm run lint`
+  exit 0. All test posts/comments/shares/likes created during
+  verification were deleted.
+- Phase 1 committed below. Next: Phase 2 (design refresh).

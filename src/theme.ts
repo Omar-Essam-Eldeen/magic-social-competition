@@ -32,7 +32,6 @@ export const theme = createTheme({
     lg: "var(--glass-shadow)",
     xl: "var(--glass-shadow)",
   },
-  cursorType: "pointer",
   components: {
     // The main bridge: every Card / Paper becomes a glass panel.
     Card: {

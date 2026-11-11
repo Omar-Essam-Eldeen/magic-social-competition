@@ -17,7 +17,7 @@ export async function createComment(postId: string, body: CreateCommentReq): Pro
   const { data } = await api.post<ApiResponse<Comment>>(`/posts/${postId}/comments`, formData);
   return data;
 }
-// PUT /comments/:commentId — edit a comment
+// PUT /posts/:postId/comments/:commentId — edit a comment
 export async function updateComment(postId: string, commentId: string, body: CreateCommentReq): Promise<ApiResponse<Comment>> {
   const formData = new FormData();
   formData.append("content", body.content);
@@ -26,12 +26,12 @@ export async function updateComment(postId: string, commentId: string, body: Cre
   const { data } = await api.put<ApiResponse<Comment>>(`/posts/${postId}/comments/${commentId}`, formData);
   return data;
 }
-// DELETE /comments/:commentId — delete a comment
+// DELETE /posts/:postId/comments/:commentId — delete a comment
 export async function deleteComment(postId: string, commentId: string): Promise<ApiResponse<Comment>> {
   const { data } = await api.delete<ApiResponse<Comment>>(`/posts/${postId}/comments/${commentId}`);
   return data;
 }
-// PUT /comments/:commentId/like — like a comment
+// PUT /posts/:postId/comments/:commentId/like — like a comment
 export async function likeComment(postId: string, commentId: string): Promise<ApiResponse<Comment>> {
   const { data } = await api.put<ApiResponse<Comment>>(`/posts/${postId}/comments/${commentId}/like`);
   return data;
