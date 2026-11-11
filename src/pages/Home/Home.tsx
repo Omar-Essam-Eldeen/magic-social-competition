@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { Alert, Button, Container, SegmentedControl, Skeleton, Stack, Text } from "@mantine/core";
+import { ActionIcon, Alert, Button, Container, SegmentedControl, Skeleton, Stack, Text, TextInput } from "@mantine/core";
+import { X } from "lucide-react";
 import { getAllPosts, getFeed } from "../../api/Posts/api.ts";
 import type { FeedFilter } from "../../api/Posts/types.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
@@ -10,6 +11,7 @@ const PAGE_SIZE = 10;
 
 export default function Home() {
   const [filter, setFilter] = useState<FeedFilter>("all");
+  const [search, setSearch] = useState("");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   const {
@@ -36,6 +38,19 @@ export default function Home() {
   // All loaded pages, flattened into one list. A page whose data is
   // missing must not throw — fall back to an empty list for that page.
   const posts = data?.pages.flatMap((page) => page.data?.posts ?? []) ?? [];
+
+  // Search filters only the posts already loaded — it never changes what
+  // the infinite query fetches, so infinite scroll works exactly as
+  // before (scrolling loads more pages, which then get filtered too).
+  const query = search.trim().toLowerCase();
+  const visiblePosts = query
+    ? posts.filter(
+        (post) =>
+          (post.body ?? "").toLowerCase().includes(query) ||
+          (post.user?.name ?? "").toLowerCase().includes(query) ||
+          (post.user?.username ?? "").toLowerCase().includes(query),
+      )
+    : posts;
 
   // Infinite scroll: when the empty sentinel div at the bottom of the feed
   // becomes visible, load the next page. No extra library needed — the
@@ -75,6 +90,27 @@ export default function Home() {
   return (
     <Container size={640} px="md">
       <Stack gap="md">
+        <TextInput
+          aria-label="Search posts"
+          placeholder="Search posts by text or author..."
+          value={search}
+          onChange={(e) => setSearch(e.currentTarget.value)}
+          rightSection={
+            query ? (
+              <ActionIcon variant="subtle" aria-label="Clear search" onClick={() => setSearch("")}>
+                <X size={16} />
+              </ActionIcon>
+            ) : undefined
+          }
+        />
+        {query && !isPending && !isError && (
+          <Text size="sm" c="dimmed">
+            {visiblePosts.length} result{visiblePosts.length === 1 ? "" : "s"} for &lsquo;{search.trim()}&rsquo;{" "}
+            <Button variant="subtle" size="compact-xs" onClick={() => setSearch("")}>
+              Clear
+            </Button>
+          </Text>
+        )}
         <SegmentedControl
           fullWidth
           value={filter}
@@ -103,9 +139,13 @@ export default function Home() {
           <Text ta="center" c="dimmed" mt="xl">
             No posts yet — be the first to share something.
           </Text>
+        ) : visiblePosts.length === 0 ? (
+          <Text ta="center" c="dimmed" mt="xl">
+            No posts match &lsquo;{search.trim()}&rsquo;.
+          </Text>
         ) : (
           <>
-            {posts.map((post) => (
+            {visiblePosts.map((post) => (
               <PostCard key={post._id} post={post} />
             ))}
             <div ref={sentinelRef} />

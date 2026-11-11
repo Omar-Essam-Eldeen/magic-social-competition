@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { ActionIcon, Avatar, Button, Card, FileInput, Group, Image, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Avatar, Button, Card, FileInput, Group, Image, Stack, Text, TextInput } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, Pencil, Trash2 } from "lucide-react";
+import { Heart, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import type { Comment } from "../../../api/Posts/Comments/types.ts";
-import { deleteComment, likeComment, updateComment } from "../../../api/Posts/Comments/api.ts";
+import { createComment, deleteComment, likeComment, updateComment } from "../../../api/Posts/Comments/api.ts";
 import { useAuth } from "../../../context/useAuth.ts";
 
 const LIKED_COLOR = "#fb4d6d";
@@ -35,6 +35,10 @@ export default function CommentItem({
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const previewRef = useRef<string | null>(null);
+  // Inline reply form state.
+  const [replying, setReplying] = useState(false);
+  const [replyContent, setReplyContent] = useState("");
+  const [replyImage, setReplyImage] = useState<File | null>(null);
 
   // Release the temporary object URL when the item unmounts.
   useEffect(() => {
@@ -106,6 +110,21 @@ export default function CommentItem({
       clearImage();
       refresh();
     },
+  });
+
+  // Replies are created with the same endpoint, passing this comment as
+  // parentComment — the API threads them under it.
+  const replyMutation = useMutation({
+    mutationFn: (req: { content: string; image?: File | null }) =>
+      createComment(postId, { content: req.content, image: req.image ?? null, parentComment: comment._id }),
+    onSuccess: () => {
+      setReplyContent("");
+      setReplyImage(null);
+      setReplying(false);
+      refresh();
+    },
+    onError: () =>
+      notifications.show({ color: "red", title: "Couldn't post your reply", message: "Try again." }),
   });
 
   const handleDelete = () => {
@@ -223,6 +242,15 @@ export default function CommentItem({
           <Heart size={16} color={liked ? LIKED_COLOR : undefined} fill={liked ? LIKED_COLOR : "none"} />
         </ActionIcon>
         <Text size="sm">{likesCount}</Text>
+        {!editing && (
+          <Button
+            variant="subtle"
+            size="xs"
+            leftSection={<MessageCircle size={16} />}
+            onClick={() => setReplying((v) => !v)}>
+            Reply
+          </Button>
+        )}
         {isMine && !editing && (
           <ActionIcon variant="subtle" aria-label="Edit comment" onClick={handleStartEdit}>
             <Pencil size={16} />
@@ -239,6 +267,58 @@ export default function CommentItem({
           </ActionIcon>
         )}
       </Group>
+
+      {replying && !editing && (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!replyContent.trim() && !replyImage) return;
+            replyMutation.mutate({ content: replyContent.trim(), image: replyImage });
+          }}>
+          <Stack gap="xs" mt="sm">
+            <Group gap="xs" align="flex-end">
+              <TextInput
+                aria-label={`Reply to ${creatorName}`}
+                placeholder={`Reply to ${creatorName}...`}
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.currentTarget.value)}
+                style={{ flex: 1 }}
+              />
+              <Button
+                type="submit"
+                size="xs"
+                loading={replyMutation.isPending}
+                disabled={!replyContent.trim() && !replyImage}>
+                Post
+              </Button>
+              <Button
+                size="xs"
+                variant="subtle"
+                onClick={() => {
+                  setReplying(false);
+                  setReplyContent("");
+                  setReplyImage(null);
+                }}>
+                Cancel
+              </Button>
+            </Group>
+            <FileInput
+              aria-label="Attach an image to your reply"
+              placeholder="Add an image (optional)"
+              accept="image/*"
+              value={replyImage}
+              onChange={setReplyImage}
+              clearable
+              size="xs"
+            />
+            {replyMutation.isError && (
+              <Text c="red" size="sm">
+                Couldn&apos;t post your reply — try again.
+              </Text>
+            )}
+          </Stack>
+        </form>
+      )}
     </Card>
   );
 }
