@@ -21,7 +21,11 @@ https://socialapp-seven-phi.vercel.app/
 
 - Competition name + deadline + judging criteria: unknown. (Asked Nov 11;
   no reply yet.) Decides how much of Phase 3 fits.
-- Notification API paths: unconfirmed. Postman check required in Phase 3.
+- ~~Notification API paths: unconfirmed. Postman check required in Phase 3.~~
+  **RESOLVED — VERIFIED in Phase 3 (2026-11-11):** GET /notifications,
+  GET /notifications/unread-count, PATCH /notifications/:id/read,
+  PATCH /notifications/read-all; real entry shape recorded in the Phase 3
+  prep section and in API-REFERENCE.md. The `/users/*` guesses all 404.
 
 ## Phase 0 — Baseline & full audit (in progress)
 
@@ -563,3 +567,41 @@ accounts; all test state restored. Results:
   endpoint).
 - Final state: `npm run build` GREEN (vite 1.75s), `npm run lint` exit 0.
   Phase 6 final verification: PASS.
+
+## Delivery (2026-11-11)
+
+- Final commit: this commit ("Delivery pack: handoff, API reference,
+  competition checklist"). Latest phase commit before it: 7732a7e
+  "Phase 6: final verification".
+- Delivery pack (all inside this working copy, committed locally — nothing
+  pushed, live site untouched):
+  - `HANDOFF.md` — one-page summary for the user: what changed per phase,
+    test results, exact deploy commands, open items.
+  - `API-REFERENCE.md` — verified API reference for the future Flutter
+    Android rebuild: base URL, auth headers + token key, every endpoint
+    with method/path/body/response shape (auth, posts, nested comment
+    routes + replies endpoints, verified notification map, users,
+    bookmarks, suggestions, follow, likers via `/posts/:postId/likes`,
+    photo upload), response-shape traps, pagination, FormData rules.
+    Based only on live-verified facts from this STAGELOG and the rebuild
+    reference §§4–6; unverified items marked UNVERIFIED (cover upload,
+    liked-posts endpoint, image-only posts at API level).
+  - `docs/COMPETITION-CHECKLIST.md` — README status, the 8 screenshots in
+    `docs/screenshots/`, live demo link (points at the CURRENT pre-upgrade
+    deploy until this copy is deployed), 2-minute demo script, and a
+    before-you-submit list.
+  - This STAGELOG close-out: notification-paths open item marked VERIFIED
+    (Phase 3); competition name/deadline still unknown.
+- Verification summary: walk-the-8 11/11 PASS, feature pass all PASS, API
+  sweep 11/11 PASS, RTL visual check PASS, axe 0 violations on 7 pages,
+  PWA verified end-to-end, clean-install build green. Zero defects in
+  Phase 6 final verification.
+- Open items as they now stand:
+  - Competition name / deadline / judging criteria — unknown (asked
+    Nov 11, no reply yet).
+  - @testmagic99 has 7 unread notifications from other users' activity —
+    pre-existing, left as-is.
+  - Throwaway avatars are the uploaded favicon (no un-upload endpoint) —
+    harmless, throwaway accounts only.
+- Delivery verification (this phase): `npm run build` GREEN,
+  `npm run lint` exit 0 — see below.
