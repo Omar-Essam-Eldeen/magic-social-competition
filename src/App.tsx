@@ -6,10 +6,12 @@ import {
   ActionIcon,
   AppShell,
   Avatar,
+  Badge,
   Box,
   Button,
   Card,
   Group,
+  Indicator,
   NavLink,
   Stack,
   Text,
@@ -18,15 +20,18 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { Bookmark, Home, Moon, Sun, User } from "lucide-react";
+import { Bell, Bookmark, Home, Moon, Sun, User } from "lucide-react";
 import AppRoutes from "./Routes.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import Brand from "./components/Brand.tsx";
+import SuggestionsCard from "./components/Users/SuggestionsCard.tsx";
 import { getUserPosts } from "./api/Users/api.ts";
+import { getUnreadCount } from "./api/Notifications/api.ts";
 
 const NAV_ITEMS = [
   { to: "/", label: "Home", Icon: Home },
   { to: "/bookmarks", label: "Saved", Icon: Bookmark },
+  { to: "/notifications", label: "Notifications", Icon: Bell },
   { to: "/profile", label: "Profile", Icon: User },
 ] as const;
 
@@ -87,6 +92,17 @@ export default function App() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Unread notification count, polled once a minute — drives the badge
+  // on the Notifications nav item (desktop) and tab (mobile).
+  const unreadQuery = useQuery({
+    queryKey: ["notifications", "unread-count"],
+    queryFn: getUnreadCount,
+    refetchInterval: 60_000,
+    enabled: !!user,
+  });
+  const unreadCount = unreadQuery.data?.data.unreadCount ?? 0;
+  const unreadLabel = unreadCount > 99 ? "99+" : unreadCount;
 
   // Per-page document title, so tabs and history entries say where you are.
   useEffect(() => {
@@ -157,6 +173,13 @@ export default function App() {
                 key={to}
                 label={label}
                 leftSection={<Icon size={18} />}
+                rightSection={
+                  to === "/notifications" && unreadCount > 0 ? (
+                    <Badge size="sm" color="red" circle aria-label={`${unreadCount} unread notifications`}>
+                      {unreadLabel}
+                    </Badge>
+                  ) : undefined
+                }
                 active={location.pathname === to}
                 onClick={() => navigate(to)}
               />
@@ -174,10 +197,11 @@ export default function App() {
         </Stack>
       </AppShell.Navbar>
 
-      {/* Desktop right aside: mini profile + about. Hidden on mobile/tablet. */}
+      {/* Desktop right aside: mini profile + suggestions + about. Hidden on mobile/tablet. */}
       <AppShell.Aside p="md">
         <Stack gap="md">
           <ProfileMiniCard />
+          <SuggestionsCard />
           <Card padding="md">
             <Title order={4} mb="xs">
               About Magic Social
@@ -196,22 +220,30 @@ export default function App() {
         </ErrorBoundary>
       </AppShell.Main>
 
-      {/* Mobile bottom tab bar — unchanged. */}
+      {/* Mobile bottom tab bar — Home, Saved, Notifications, Profile. */}
       {user && (
         <AppShell.Footer hiddenFrom="sm">
           <Group h="100%" px="md" justify="space-around">
             {NAV_ITEMS.map(({ to, label, Icon }) => {
               const active = location.pathname === to;
+              const showBadge = to === "/notifications" && unreadCount > 0;
               return (
-                <ActionIcon
+                <Indicator
                   key={to}
-                  variant={active ? "filled" : "subtle"}
-                  size="lg"
-                  aria-label={label}
-                  aria-current={active ? "page" : undefined}
-                  onClick={() => navigate(to)}>
-                  <Icon size={22} />
-                </ActionIcon>
+                  label={unreadLabel}
+                  size={16}
+                  color="red"
+                  disabled={!showBadge}
+                  position="top-end">
+                  <ActionIcon
+                    variant={active ? "filled" : "subtle"}
+                    size="lg"
+                    aria-label={showBadge ? `${label}, ${unreadCount} unread` : label}
+                    aria-current={active ? "page" : undefined}
+                    onClick={() => navigate(to)}>
+                    <Icon size={22} />
+                  </ActionIcon>
+                </Indicator>
               );
             })}
           </Group>
