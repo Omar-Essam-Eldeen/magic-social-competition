@@ -8,8 +8,8 @@ import { ModalsProvider } from "@mantine/modals";
 import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import App from "./App.tsx";
-import { theme, glassVariables } from "./theme.ts";
-import "./styles/glass.css";
+import { theme, themeVariables } from "./theme.ts";
+import "./styles/app.css";
 import { AuthProvider } from "./context/AuthProvider.tsx";
 
 const queryClient = new QueryClient({
@@ -25,7 +25,7 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <MantineProvider theme={theme} cssVariablesResolver={glassVariables} defaultColorScheme="auto">
+      <MantineProvider theme={theme} cssVariablesResolver={themeVariables} defaultColorScheme="auto">
         <Notifications />
         <ModalsProvider>
           <BrowserRouter>

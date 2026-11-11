@@ -1,7 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import Login from "./pages/Auth/Login.tsx";
 import Signup from "./pages/Auth/Signup.tsx";
-import Home from "./pages/Home/Home.tsx";
+import { RootSwitch } from "./pages/Landing/Landing.tsx";
 import { GuestRoute, ProtectedRoute } from "./components/Guards/ProtectedRoutes.tsx";
 import PostDetails from "./pages/Posts/PostDetails.tsx";
 import Profile from "./pages/Profile/Profile.tsx";
@@ -10,14 +10,8 @@ import Bookmarks from "./pages/Posts/Bookmarks.tsx";
 export default function AppRoutes() {
   return (
     <Routes>
-      <Route
-        path="/"
-        element={
-          <ProtectedRoute>
-            <Home />
-          </ProtectedRoute>
-        }
-      />
+      {/* "/" is public: RootSwitch shows the feed when logged in, the landing page otherwise. */}
+      <Route path="/" element={<RootSwitch />} />
       <Route
         path="/signup"
         element={

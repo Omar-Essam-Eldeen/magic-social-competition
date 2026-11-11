@@ -1,0 +1,37 @@
+/* Clean theme — plain surfaces, no blur, no orbs (Phase 2).
+   Only small helpers live here: selection, focus ring, the like pop. */
+
+::selection {
+  background: rgba(139, 92, 246, 0.35);
+}
+
+:focus-visible {
+  outline: 2px solid #8b5cf6;
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Like-button pop: short scale bounce on tap. */
+@keyframes like-pop {
+  0% {
+    transform: scale(1);
+  }
+
+  40% {
+    transform: scale(1.35);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.like-pop {
+  animation: like-pop 0.25s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .like-pop {
+    animation: none;
+  }
+}

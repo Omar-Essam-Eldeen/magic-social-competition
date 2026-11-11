@@ -5,6 +5,7 @@ import { Link, useNavigate } from "react-router-dom";
 import {
   Alert,
   Button,
+  Center,
   Container,
   Group,
   Paper,
@@ -17,6 +18,7 @@ import {
 } from "@mantine/core";
 import { isAxiosError } from "axios";
 import { useAuth } from "../../context/useAuth.ts";
+import { LogoMark } from "../../components/Brand.tsx";
 import { RegisterSchema, type RegisterFormData } from "../../api/Auth/schema.ts";
 
 export default function Signup() {
@@ -53,7 +55,10 @@ export default function Signup() {
 
   return (
     <Container size="xs" py="xl">
-      <Paper shadow="md" radius="lg" p="xl">
+      <Paper radius="md" p="xl">
+        <Center mb="md">
+          <LogoMark size={48} />
+        </Center>
         <Title order={2} ta="center" mb="md">
           Create your account
         </Title>
@@ -114,7 +119,7 @@ export default function Signup() {
               {...register("rePassword")}
               error={errors.rePassword?.message}
             />
-            <Button type="submit" loading={isSubmitting} fullWidth className="btn-gradient">
+            <Button type="submit" loading={isSubmitting} fullWidth>
               Sign up
             </Button>
             <Text ta="center" size="sm">

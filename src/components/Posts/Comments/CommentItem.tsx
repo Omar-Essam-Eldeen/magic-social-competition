@@ -139,7 +139,7 @@ export default function CommentItem({
           {creator?.name?.[0]}
         </Avatar>
         <div>
-          <Text fw={700} size="sm" className="font-display">
+          <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
             {creatorName}
           </Text>
           {relativeTime && (
@@ -161,7 +161,6 @@ export default function CommentItem({
             />
             <Button
               size="xs"
-              className="btn-gradient"
               loading={updateMutation.isPending}
               disabled={!draft.trim() && !image}
               onClick={() => updateMutation.mutate({ content: draft.trim(), image })}>

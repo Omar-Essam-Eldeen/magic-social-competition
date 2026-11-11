@@ -1,7 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
-import { ActionIcon, Avatar, Button, Card, FileInput, Group, Image, Text, Textarea } from "@mantine/core";
+import {
+  ActionIcon,
+  Avatar,
+  Button,
+  Card,
+  FileInput,
+  Group,
+  Image,
+  Modal,
+  Text,
+  Textarea,
+  UnstyledButton,
+} from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { formatDistanceToNow } from "date-fns";
@@ -12,7 +24,10 @@ import { bookmarkPost, deletePost, likePost, sharePost, updatePost } from "../..
 import { useAuth } from "../../context/useAuth.ts";
 
 const LIKED_COLOR = "#fb4d6d";
-const SAVED_COLOR = "#22d3ee";
+const SAVED_COLOR = "#8b5cf6";
+
+/** Post photos: 16/9 cover, 12px radius, pointer when they open the lightbox. */
+const POST_IMAGE_STYLE = { aspectRatio: "16 / 9", objectFit: "cover" } as const;
 
 /** Relative time ("2h ago"); never renders "Invalid Date". */
 function formatRelativeTime(value?: string): string {
@@ -37,6 +52,8 @@ export default function PostCard({ post }: { post: Post }) {
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const previewRef = useRef<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
+  const [likePop, setLikePop] = useState(false);
 
   // Release the temporary object URL when the card unmounts.
   useEffect(() => {
@@ -152,11 +169,16 @@ export default function PostCard({ post }: { post: Post }) {
     clearImage();
   };
 
+  const handleLike = () => {
+    setLikePop(true);
+    likeMutation.mutate(post._id);
+  };
+
   // C-2: a post whose author is gone (deleted user / malformed data) must not
   // crash the feed — render a fallback card instead.
   if (!post.user) {
     return (
-      <Card padding="lg" className="post-card">
+      <Card padding="lg">
         <Text c="dimmed">Post unavailable</Text>
       </Card>
     );
@@ -171,17 +193,17 @@ export default function PostCard({ post }: { post: Post }) {
   const topCommentAuthor = topComment?.commentCreator?.name ?? "Deleted user";
   const sharedPost = post.sharedPost;
   const sharedAuthorName = sharedPost?.user?.name ?? "Deleted user";
+  const postImageAlt = `Photo in a post by ${post.user.name}`;
+  const sharedImageAlt = `Photo in a post by ${sharedAuthorName}`;
 
   return (
-    <Card padding="lg" className="post-card">
+    <Card padding="lg">
       <Group gap="sm" mb="sm">
-        <div className="av-ring">
-          <Avatar src={post.user.photo} alt={post.user.name} radius="xl" size={46}>
-            {post.user.name?.[0]}
-          </Avatar>
-        </div>
+        <Avatar src={post.user.photo} alt={post.user.name} radius="xl" size={46}>
+          {post.user.name?.[0]}
+        </Avatar>
         <div>
-          <Text fw={700} size="sm" className="font-display">
+          <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
             {post.user.name}
           </Text>
           <Text size="xs" c="dimmed">
@@ -203,14 +225,15 @@ export default function PostCard({ post }: { post: Post }) {
             mb="sm"
           />
           {preview ? (
-            <Image src={preview} alt="New image preview" loading="lazy" className="post-image" mb="sm" />
+            <Image src={preview} alt="New image preview" loading="lazy" radius="md" style={POST_IMAGE_STYLE} mb="sm" />
           ) : (
             post.image && (
               <Image
                 src={post.image}
-                alt={`Photo in a post by ${post.user.name}`}
+                alt={postImageAlt}
                 loading="lazy"
-                className="post-image"
+                radius="md"
+                style={POST_IMAGE_STYLE}
                 mb="sm"
               />
             )
@@ -227,7 +250,6 @@ export default function PostCard({ post }: { post: Post }) {
           <Group gap="xs" mb="sm">
             <Button
               size="xs"
-              className="btn-gradient"
               loading={updateMutation.isPending}
               disabled={!draft.trim() && !image}
               onClick={() => updateMutation.mutate({ body: draft.trim(), image })}>
@@ -253,7 +275,7 @@ export default function PostCard({ post }: { post: Post }) {
               {sharedPost.user?.name?.[0]}
             </Avatar>
             <div>
-              <Text fw={700} size="sm" className="font-display">
+              <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
                 {sharedAuthorName}
               </Text>
               {formatRelativeTime(sharedPost.createdAt) && (
@@ -269,24 +291,23 @@ export default function PostCard({ post }: { post: Post }) {
             </Text>
           )}
           {sharedPost.image && (
-            <Image
-              src={sharedPost.image}
-              alt={`Photo in a post by ${sharedAuthorName}`}
-              loading="lazy"
-              className="post-image"
-            />
+            <UnstyledButton
+              aria-label={`View full ${sharedImageAlt}`}
+              onClick={() => setLightbox({ src: sharedPost.image as string, alt: sharedImageAlt })}
+              style={{ display: "block", width: "100%" }}>
+              <Image src={sharedPost.image} alt={sharedImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
+            </UnstyledButton>
           )}
         </Card>
       )}
 
       {!editing && post.image && (
-        <Image
-          src={post.image}
-          alt={`Photo in a post by ${post.user.name}`}
-          loading="lazy"
-          className="post-image"
-          mb="sm"
-        />
+        <UnstyledButton
+          aria-label={`View full ${postImageAlt}`}
+          onClick={() => setLightbox({ src: post.image as string, alt: postImageAlt })}
+          style={{ display: "block", width: "100%", marginBottom: 12 }}>
+          <Image src={post.image} alt={postImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
+        </UnstyledButton>
       )}
 
       {topComment?.content && (
@@ -319,7 +340,9 @@ export default function PostCard({ post }: { post: Post }) {
             aria-label={`${likesCount} likes`}
             aria-pressed={liked}
             disabled={likeMutation.isPending}
-            onClick={() => likeMutation.mutate(post._id)}>
+            className={likePop ? "like-pop" : undefined}
+            onAnimationEnd={() => setLikePop(false)}
+            onClick={handleLike}>
             <Heart size={18} color={liked ? LIKED_COLOR : undefined} fill={liked ? LIKED_COLOR : "none"} />
           </ActionIcon>
           <Text size="sm">{likesCount}</Text>
@@ -375,6 +398,15 @@ export default function PostCard({ post }: { post: Post }) {
           </>
         )}
       </Group>
+
+      <Modal
+        opened={lightbox !== null}
+        onClose={() => setLightbox(null)}
+        size="lg"
+        centered
+        title={lightbox?.alt ?? "Photo"}>
+        {lightbox && <Image src={lightbox.src} alt={lightbox.alt} radius="md" />}
+      </Modal>
     </Card>
   );
 }

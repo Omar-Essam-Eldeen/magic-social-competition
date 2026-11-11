@@ -3,8 +3,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
 import { Link, useNavigate } from "react-router-dom";
-import { Alert, Button, Container, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
+import { Alert, Button, Center, Container, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useAuth } from "../../context/useAuth";
+import { LogoMark } from "../../components/Brand.tsx";
 import { LoginSchema, type LoginFormData } from "../../api/Auth/schema.ts";
 
 export default function Login() {
@@ -39,7 +40,10 @@ export default function Login() {
 
   return (
     <Container size="xs" py="xl">
-      <Paper shadow="md" radius="lg" p="xl">
+      <Paper radius="md" p="xl">
+        <Center mb="md">
+          <LogoMark size={48} />
+        </Center>
         <Title order={2} ta="center" mb="md">
           Welcome back
         </Title>
@@ -65,7 +69,7 @@ export default function Login() {
               {...register("password")}
               error={errors.password?.message}
             />
-            <Button type="submit" loading={isSubmitting} fullWidth className="btn-gradient">
+            <Button type="submit" loading={isSubmitting} fullWidth>
               Log in
             </Button>
             <Text ta="center" size="sm">

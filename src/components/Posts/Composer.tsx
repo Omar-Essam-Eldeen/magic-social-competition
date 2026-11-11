@@ -59,7 +59,7 @@ export default function Composer() {
   });
 
   return (
-    <Card shadow="sm" padding="lg" radius="md" withBorder>
+    <Card padding="lg">
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -83,8 +83,10 @@ export default function Composer() {
             onChange={handleImageChange}
             clearable
           />
-          {preview && <Image src={preview} alt="Image preview" loading="lazy" className="post-image" />}
-          <Button type="submit" loading={createMutation.isPending} disabled={!body.trim()} className="btn-gradient">
+          {preview && (
+            <Image src={preview} alt="Image preview" loading="lazy" radius="md" style={{ aspectRatio: "16 / 9", objectFit: "cover" }} />
+          )}
+          <Button type="submit" loading={createMutation.isPending} disabled={!body.trim()}>
             Post
           </Button>
         </Stack>

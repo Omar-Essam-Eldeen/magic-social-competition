@@ -40,6 +40,10 @@ export interface User {
   email?: string;
   photo?: string | null;
   cover?: string;
+  // Live-verified 2026-11-11: GET /users/profile-data returns these counts.
+  followersCount?: number;
+  followingCount?: number;
+  bookmarksCount?: number;
 }
 
 // A user from GET /users/suggestions — the API adds follower counts.
