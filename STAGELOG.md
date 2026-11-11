@@ -510,3 +510,56 @@ accounts; all test state restored. Results:
 - `npm run lint` exit 0.
 - Phase 5 visual/a11y verification: PASS (axe 0 violations, keyboard
   rings on every stop, PWA verified end-to-end).
+
+## Phase 6 — Final verification (2026-11-11)
+
+- Verdict: **PASS — no app defects found.** Full report:
+  `~/workspace/predeploy/visual-verify/phase6-report.md`. Harness:
+  `visual-verify/phase6-verify.js`, `phase6-recheck.js`,
+  `phase6-recheck2.js`, `phase6-api.sh` (results JSONs + 37 screenshots in
+  `visual-verify/shots/phase6/`). No app code changed in this phase.
+- Clean install (fresh clone of the committed tree, HEAD 2ddec8e):
+  `npm ci` 8.5s / 497 packages, exit 0; `npm run build` GREEN (11.37s total,
+  vite 1.65s); `npm run lint` exit 0 (5.7s). Node v24.22.1, npm 10.9.4.
+  Chunks identical to Phase 5 (index 79.52 kB / vendor-react 244.89 /
+  vendor-mantine 210.09 / vendor-lib 248.45; no chunk >500 kB).
+- Walk-the-8 (fresh throwaway `p6vwcjwz8s` / Test1234!, desktop 1280 light):
+  **11/11 PASS** — signup, logout+login, feed, post details + comments,
+  profile, post create/edit/delete, comment create/edit/delete, change
+  password with STAY-logged-in confirmed (token present, feed loads as the
+  user), password restored afterwards.
+- Feature pass: like/unlike 1→2→1, likers modal, bookmark + Saved + remove,
+  share, filters All/Following/My posts, infinite scroll 10→70 cards,
+  image change on edit, suggestions + follow/unfollow (card + profile),
+  likers modal, profile-photo upload, notifications (bell badge, page,
+  mark one, mark all, click→post), public profile, threaded reply, search
+  match ("1 result for …") + no-match, dark toggle + OS dark, language
+  toggle AR (RTL) + back to EN, PWA SW activated + controlling, mobile
+  390px feed/profile 0px overflow — **all PASS**.
+- API sweep (curl, @testmagic99): **11/11 PASS** — signin, getAllPosts,
+  getPost, getComments, getBookmarks, getSuggestions, getUnreadCount,
+  getNotifications, manifest 200 + name, sw.js 200.
+- First full run was 42/50 and the first recheck 19/28 — every FAIL was a
+  **harness bug, not an app bug**, each re-verified passing with a corrected
+  selector (details in the report §5): signup label is "Re-password";
+  share count must be read on the details page (feed indices shift after
+  refetch); image check must compare the post photo, not the avatar;
+  suggestion rows have no profile links; the bell badge lives on a Mantine
+  NavLink (no `<a href>`), aria-label "N unread notifications"; the AR
+  toggle label is "EN — التبديل إلى الإنجليزية"; placeholders aren't in
+  innerText; search is singular for 1 match; unscoped Follow selectors hit
+  the aside card (DOM: Navbar, Aside, Main). Recheck-2: **17/17 PASS**.
+- Console/network: run 2 zero console errors, zero page errors, zero
+  failed requests ≥400. One "Image corrupt or truncated" R2 webp note in
+  the recheck — the known proxy artifact from Phases 2–4, image renders fine.
+- Cleanup verified (UI + API): fresh account has 0 posts, following [],
+  0 bookmarks, 0 unread. All probe posts/comments/replies/likes/follows/
+  bookmarks/shares deleted or undone, including the "updated profile
+  picture." auto-post the API creates on photo upload and one accidental
+  follow from the recheck's unscoped selector (unfollowed, API-verified).
+  Left as-is (pre-existing): @testmagic99's 7 unread notifications from
+  other users' activity; throwaway avatars now the uploaded favicon
+  (@testmagic2 from Phase 3, `p6vwcjwz8s` from this phase — no un-upload
+  endpoint).
+- Final state: `npm run build` GREEN (vite 1.75s), `npm run lint` exit 0.
+  Phase 6 final verification: PASS.
