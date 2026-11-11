@@ -123,10 +123,16 @@ export default function Profile() {
             <Avatar
               src={user.photo}
               alt={user.name}
-              radius="xl"
+              radius={999}
               size={104}
               mt={-46}
-              style={{ border: "3px solid var(--mantine-color-default)" }}>
+              style={{
+                border: "3px solid var(--mantine-color-default)",
+                // Solid background: avatar photos can be transparent PNGs
+                // (the default avatar is), and without this the cover
+                // shows through the transparent top of the photo.
+                backgroundColor: "var(--mantine-color-default)",
+              }}>
               {user.name?.[0] ?? "?"}
             </Avatar>
             <Title order={3} ff="Sora, system-ui, sans-serif" mt="sm">

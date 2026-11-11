@@ -183,3 +183,36 @@ accounts; all test state restored. Results:
   ship photo upload (PUT /users/upload-photo, field "photo") and check
   for a cover route in the Postman docs; if none exists, cover stays
   display-only (gradient fallback already in Phase 2).
+
+## Phase 2 — Visual verification (2026-11-11, continuation coordinator)
+
+- Headless Firefox (Playwright) against `vite preview` of the production
+  build: 32 screenshots — landing/login/signup/feed/details/profile/
+  bookmarks × light/dark × desktop 1280/mobile 390 — plus re-shoots.
+  Zero console errors, zero page errors in every run.
+- Browser tooling notes (for later phases): Chromium in this VM cannot
+  reach the internet (egress proxy + MITM CA); Firefox via the env proxy
+  with `ignoreHTTPSErrors: true` works. Screenshot harness lives in
+  `~/workspace/predeploy/visual-verify/` (shots.js, fix-verify.js) — it
+  reads the proxy from env, never hardcodes credentials.
+- Findings (3 real, all fixed + re-verified):
+  - V1 Profile avatar showed the cover through it: the default avatar
+    PNG is transparent at the top (13,593/18,000 px transparent in the
+    top 60 rows). The avatar is fine; the photo is a cutout. Fix: solid
+    card-colour background on the profile Avatar.
+  - V2 Profile avatar was a 24px-radius rounded rectangle, not round
+    (theme says "avatars round"). Fix: Avatar default radius 999 in
+    theme.ts + explicit radius 999 on the profile Avatar.
+  - V3 No theme toggle visible on desktop when logged out (navbar
+    collapsed + mobile header hidden). Fix: AppShell header now shows
+    whenever logged out (`hiddenFrom={user ? "sm" : undefined}`), so
+    landing/login/signup have logo + toggle on desktop too.
+- Non-defects, confirmed: the feed's "white gap" under the first post
+  image in early shots was slow image loading through the proxy, not
+  layout — later shots render the images fully. Bookmarks empty state is
+  correct (testmagic99's only bookmark was on a deleted post; the
+  server count is stale). Dark mode works (verified via emulated
+  prefers-color-scheme: feed/profile/login/mobile all clean, good
+  contrast); the earlier localStorage-seed method was invalid for
+  `defaultColorScheme="auto"`, which follows the OS preference.
+- Phase 2 visual verification: PASS. Build green, lint exit 0.

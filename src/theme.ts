@@ -51,7 +51,9 @@ export const theme = createTheme({
       },
     },
     Avatar: {
-      defaultProps: { radius: "xl" },
+      // Round avatars at every size (radius "xl" is only 24px, which reads
+      // as a rounded rectangle on the 104px profile photo).
+      defaultProps: { radius: 999 },
     },
     Button: {
       defaultProps: { radius: "sm" },

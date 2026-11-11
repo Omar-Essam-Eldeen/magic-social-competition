@@ -125,8 +125,11 @@ export default function App() {
       aside={{ width: 320, breakpoint: "lg", collapsed: { mobile: true, desktop: !user } }}
       footer={{ height: 60 }}
       padding="md">
-      {/* Mobile top header: logo + theme toggle (+ Logout when logged in). */}
-      <AppShell.Header hiddenFrom="sm">
+      {/* Top header: logo + theme toggle (+ Logout when logged in).
+          On mobile it is always shown. On desktop it is shown only when
+          logged out — otherwise the navbar carries the logo and toggle,
+          and a logged-out desktop user would have no way to switch themes. */}
+      <AppShell.Header hiddenFrom={user ? "sm" : undefined}>
         <Group h="100%" px="md" justify="space-between">
           <UnstyledButton aria-label="Magic Social — go to home" onClick={() => navigate("/")}>
             <Brand />
