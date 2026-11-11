@@ -20,9 +20,9 @@ export const theme = createTheme({
       "#4a2c8f",
     ],
   },
-  fontFamily: '"Inter", system-ui, sans-serif',
+  fontFamily: '"Inter", "Cairo", system-ui, sans-serif',
   headings: {
-    fontFamily: '"Sora", system-ui, sans-serif',
+    fontFamily: '"Sora", "Cairo", system-ui, sans-serif',
     fontWeight: "700",
   },
   // Cards 16px, buttons/inputs 10px (defaultRadius sm), avatars round.

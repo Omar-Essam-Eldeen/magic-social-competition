@@ -11,6 +11,7 @@ import App from "./App.tsx";
 import { theme, themeVariables } from "./theme.ts";
 import "./styles/app.css";
 import { AuthProvider } from "./context/AuthProvider.tsx";
+import { LanguageProvider } from "./context/LanguageProvider.tsx";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -26,14 +27,16 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme} cssVariablesResolver={themeVariables} defaultColorScheme="auto">
-        <Notifications />
-        <ModalsProvider>
-          <BrowserRouter>
-            <AuthProvider>
-              <App />
-            </AuthProvider>
-          </BrowserRouter>
-        </ModalsProvider>
+        <LanguageProvider>
+          <Notifications />
+          <ModalsProvider>
+            <BrowserRouter>
+              <AuthProvider>
+                <App />
+              </AuthProvider>
+            </BrowserRouter>
+          </ModalsProvider>
+        </LanguageProvider>
       </MantineProvider>
     </QueryClientProvider>
   </StrictMode>,

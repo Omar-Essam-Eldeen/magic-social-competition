@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./context/useAuth";
+import { useLanguage } from "./context/useLanguage";
 import {
   ActionIcon,
   AppShell,
@@ -24,29 +25,15 @@ import { Bell, Bookmark, Home, Moon, Sun, User } from "lucide-react";
 import AppRoutes from "./Routes.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import Brand from "./components/Brand.tsx";
+import LanguageToggle from "./components/LanguageToggle.tsx";
 import SuggestionsCard from "./components/Users/SuggestionsCard.tsx";
 import { getUserPosts } from "./api/Users/api.ts";
 import { getUnreadCount } from "./api/Notifications/api.ts";
 
-const NAV_ITEMS = [
-  { to: "/", label: "Home", Icon: Home },
-  { to: "/bookmarks", label: "Saved", Icon: Bookmark },
-  { to: "/notifications", label: "Notifications", Icon: Bell },
-  { to: "/profile", label: "Profile", Icon: User },
-] as const;
-
-const PAGE_TITLES: Record<string, string> = {
-  "/": "Magic Social",
-  "/login": "Log in — Magic Social",
-  "/signup": "Sign up — Magic Social",
-  "/profile": "Profile — Magic Social",
-  "/bookmarks": "Saved — Magic Social",
-  "/notifications": "Notifications — Magic Social",
-};
-
 /** Right-rail mini profile: avatar, name, @username, Posts count, link to /profile. */
 function ProfileMiniCard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const postsQuery = useQuery({
     queryKey: ["userPosts", user?._id],
@@ -76,11 +63,11 @@ function ProfileMiniCard() {
           {totalPosts}
         </Text>{" "}
         <Text span c="dimmed">
-          Posts
+          {t.common.posts}
         </Text>
       </Text>
       <Button variant="light" size="xs" fullWidth onClick={() => navigate("/profile")}>
-        View profile
+        {t.common.viewProfile}
       </Button>
     </Card>
   );
@@ -89,6 +76,16 @@ function ProfileMiniCard() {
 export default function App() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === "dark";
+  const { t } = useLanguage();
+
+  // Nav labels and page titles come from the dictionary so they update
+  // live when the language changes — they must live inside the component.
+  const NAV_ITEMS = [
+    { to: "/", label: t.nav.home, Icon: Home },
+    { to: "/bookmarks", label: t.nav.saved, Icon: Bookmark },
+    { to: "/notifications", label: t.nav.notifications, Icon: Bell },
+    { to: "/profile", label: t.nav.profile, Icon: User },
+  ] as const;
 
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -106,18 +103,28 @@ export default function App() {
   const unreadLabel = unreadCount > 99 ? "99+" : unreadCount;
 
   // Per-page document title, so tabs and history entries say where you are.
+  // Titles come from the dictionary and live inside the effect so they
+  // update when the language changes without re-creating a dep object.
   useEffect(() => {
     const pathname = location.pathname;
+    const pageTitles: Record<string, string> = {
+      "/": t.common.titles.home,
+      "/login": t.common.titles.login,
+      "/signup": t.common.titles.signup,
+      "/profile": t.common.titles.profile,
+      "/bookmarks": t.common.titles.saved,
+      "/notifications": t.common.titles.notifications,
+    };
     document.title = pathname.startsWith("/posts/")
-      ? "Post — Magic Social"
-      : (PAGE_TITLES[pathname] ?? "Magic Social");
-  }, [location.pathname]);
+      ? t.common.titles.post
+      : (pageTitles[pathname] ?? t.common.titles.home);
+  }, [location.pathname, t]);
 
   const handleLogout = () => {
     modals.openConfirmModal({
-      title: "Log out?",
-      children: <Text size="sm">Are you sure you want to log out of Magic Social?</Text>,
-      labels: { confirm: "Log out", cancel: "Cancel" },
+      title: t.common.logoutTitle,
+      children: <Text size="sm">{t.common.logoutText}</Text>,
+      labels: { confirm: t.common.logout, cancel: t.common.cancel },
       confirmProps: { color: "red" },
       onConfirm: () => {
         logout();
@@ -129,7 +136,7 @@ export default function App() {
   const themeToggle = (
     <ActionIcon
       variant="default"
-      aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+      aria-label={dark ? t.common.switchToLight : t.common.switchToDark}
       onClick={toggleColorScheme}>
       {dark ? <Sun size={20} /> : <Moon size={20} />}
     </ActionIcon>
@@ -148,14 +155,15 @@ export default function App() {
           and a logged-out desktop user would have no way to switch themes. */}
       <AppShell.Header hiddenFrom={user ? "sm" : undefined}>
         <Group h="100%" px="md" justify="space-between">
-          <UnstyledButton aria-label="Magic Social — go to home" onClick={() => navigate("/")}>
+          <UnstyledButton aria-label={t.common.goHome} onClick={() => navigate("/")}>
             <Brand />
           </UnstyledButton>
           <Group gap="xs">
+            <LanguageToggle />
             {themeToggle}
             {user && (
               <Button variant="light" size="sm" onClick={handleLogout}>
-                Logout
+                {t.common.logout}
               </Button>
             )}
           </Group>
@@ -165,7 +173,7 @@ export default function App() {
       {/* Desktop left navbar: logo at top, nav, theme toggle + Logout at the bottom. */}
       <AppShell.Navbar p="md">
         <Stack h="100%" gap="md">
-          <UnstyledButton aria-label="Magic Social — go to home" onClick={() => navigate("/")}>
+          <UnstyledButton aria-label={t.common.goHome} onClick={() => navigate("/")}>
             <Brand />
           </UnstyledButton>
           <Stack gap={4}>
@@ -176,7 +184,7 @@ export default function App() {
                 leftSection={<Icon size={18} />}
                 rightSection={
                   to === "/notifications" && unreadCount > 0 ? (
-                    <Badge size="sm" color="red" circle aria-label={`${unreadCount} unread notifications`}>
+                    <Badge size="sm" color="red" circle aria-label={t.common.unread(unreadCount)}>
                       {unreadLabel}
                     </Badge>
                   ) : undefined
@@ -188,10 +196,13 @@ export default function App() {
           </Stack>
           <Box style={{ flex: 1 }} />
           <Group justify="space-between">
-            {themeToggle}
+            <Group gap="xs">
+              <LanguageToggle />
+              {themeToggle}
+            </Group>
             {user && (
               <Button variant="light" size="sm" onClick={handleLogout}>
-                Logout
+                {t.common.logout}
               </Button>
             )}
           </Group>
@@ -205,11 +216,10 @@ export default function App() {
           {user && <SuggestionsCard />}
           <Card padding="md">
             <Title order={4} mb="xs">
-              About Magic Social
+              {t.nav.aboutTitle}
             </Title>
             <Text size="sm" c="dimmed">
-              Share posts with photos, follow people you like, and save the posts you love — all in
-              one clean feed.
+              {t.nav.aboutText}
             </Text>
           </Card>
         </Stack>
@@ -239,7 +249,7 @@ export default function App() {
                   <ActionIcon
                     variant={active ? "filled" : "subtle"}
                     size="lg"
-                    aria-label={showBadge ? `${label}, ${unreadCount} unread` : label}
+                    aria-label={showBadge ? `${label}, ${t.common.unreadShort(unreadCount)}` : label}
                     aria-current={active ? "page" : undefined}
                     onClick={() => navigate(to)}>
                     <Icon size={22} />
