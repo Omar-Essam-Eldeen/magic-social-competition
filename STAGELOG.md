@@ -152,3 +152,34 @@ https://socialapp-seven-phi.vercel.app/
 - Landing page (src/pages/Landing/Landing.tsx): hero (72px mark, Sora wordmark, one-line pitch, Log in + Sign up buttons), 3 feature cards (share posts with photos / follow people / save what you love), footer line. RootSwitch in the same file: "/" is now PUBLIC — logged in → <Home/>, logged out → <Landing/>; /login + /signup stay guest-guarded, /posts/:id, /profile, /bookmarks stay protected.
 - Verification: `npm run build` GREEN (tsc + vite, 2.33s; JS 725 kB / 219 kB gzip — chunk-size warning is pre-existing, code splitting is Phase 5). `npm run lint` exit 0. No `any`, no `@ts-ignore`, no `window.confirm`, no secrets, no guessed API paths. No test data created (profile-data check was read-only). Nothing committed or pushed.
 - NOT done here (coordinator step): visual verification — screenshots light/dark, desktop/mobile — no browser available in this session.
+
+## Phase 3 prep — endpoint verification (2026-11-11, coordinator, live)
+
+All previously-unverified Phase 3 endpoints probed with throwaway
+accounts; all test state restored. Results:
+- FOLLOW: PUT /users/:userId/follow VERIFIED — returns
+  `data: { following: true/false, followersCount }` (the response tells
+  you the new state). Follow then unfollow restored (following: []).
+  profile-data `following`/`followers` are arrays of user-ID strings.
+  profile-data keys: _id, bookmarks, bookmarksCount, cover ("" when
+  unset), createdAt, dateOfBirth, email, followers, followersCount,
+  following, followingCount, gender, id, name, passwordChangedAt, photo,
+  username.
+- NOTIFICATIONS — full map VERIFIED (the /users/* guesses all 404):
+  GET /notifications → data: { notifications: [...] } + pagination meta;
+  GET /notifications/unread-count → data: { unreadCount };
+  PATCH /notifications/:id/read → data: { notification };
+  PATCH /notifications/read-all → data: { modifiedCount }.
+  Entry shape: { _id, recipient: {_id,name,photo}, actor: {_id,name,photo},
+  type ("like_post", ...), entityType, entityId, isRead, createdAt,
+  entity: {_id, unavailable?} }. NOTE: the old `Notification` type in
+  src/types.ts (content?/sender?/post?) is WRONG for this API — Phase 3
+  must replace it with the real shape above. All 4 of testmagic99's
+  notifications were marked read during probing (throwaway test data).
+- LIKERS: GET /posts/:postId/likes (see Phase 1) — done.
+- SUGGESTIONS: GET /users/suggestions (see Phase 1) — done.
+- COVER PHOTO: no upload-cover endpoint found in the API surface used so
+  far; profile `cover` field exists but is "" when unset. Phase 3 will
+  ship photo upload (PUT /users/upload-photo, field "photo") and check
+  for a cover route in the Postman docs; if none exists, cover stays
+  display-only (gradient fallback already in Phase 2).
