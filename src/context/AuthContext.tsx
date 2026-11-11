@@ -9,6 +9,7 @@ export interface AuthContextType {
   signup: (data: RegisterDataReq) => Promise<void>;
   changePassword: (body: ChangePasswordReq) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null);

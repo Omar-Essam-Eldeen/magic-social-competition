@@ -1,0 +1,171 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
+import {
+  Alert,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  Container,
+  Group,
+  Skeleton,
+  Stack,
+  Text,
+  Title,
+  UnstyledButton,
+} from "@mantine/core";
+import { formatDistanceToNow } from "date-fns";
+import {
+  getNotifications,
+  markAllNotificationsRead,
+  markNotificationRead,
+} from "../../api/Notifications/api.ts";
+import type { NotificationItem } from "../../api/Notifications/types.ts";
+
+/** Relative time ("2h ago"); never renders "Invalid Date". */
+function formatRelativeTime(value?: string): string {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return formatDistanceToNow(date, { addSuffix: true });
+}
+
+/** Human text for a notification type; unknown types are prettified. */
+function notificationText(type: string): string {
+  switch (type) {
+    case "like_post":
+      return "liked your post";
+    case "like_comment":
+      return "liked your comment";
+    case "comment":
+      return "commented on your post";
+    case "follow":
+      return "started following you";
+    case "share":
+      return "shared your post";
+    default:
+      return type.replace(/_/g, " ");
+  }
+}
+
+export default function Notifications() {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const notificationsQuery = useQuery({ queryKey: ["notifications"], queryFn: () => getNotifications() });
+  const notificationsList = notificationsQuery.data?.data ?? [];
+
+  const invalidate = () => {
+    queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    queryClient.invalidateQueries({ queryKey: ["notifications", "unread-count"] });
+  };
+
+  const markReadMutation = useMutation({
+    mutationFn: (notificationId: string) => markNotificationRead(notificationId),
+    onSuccess: invalidate,
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: markAllNotificationsRead,
+    onSuccess: invalidate,
+  });
+
+  const handleRowClick = (notification: NotificationItem) => {
+    if (!notification.isRead) markReadMutation.mutate(notification._id);
+    if (notification.entityType === "post" && notification.entityId) {
+      navigate(`/posts/${notification.entityId}`);
+    }
+  };
+
+  const unreadCount = notificationsList.filter((n) => !n.isRead).length;
+
+  return (
+    <Container size={640} px="md">
+      <Stack gap="md">
+        <Group justify="space-between" align="center">
+          <Title order={2} ff="Sora, system-ui, sans-serif">
+            Notifications
+          </Title>
+          {unreadCount > 0 && (
+            <Button
+              variant="subtle"
+              size="sm"
+              loading={markAllReadMutation.isPending}
+              onClick={() => markAllReadMutation.mutate()}>
+              Mark all read
+            </Button>
+          )}
+        </Group>
+
+        {notificationsQuery.isPending ? (
+          <Stack gap="sm">
+            <Skeleton height={72} radius="md" />
+            <Skeleton height={72} radius="md" />
+            <Skeleton height={72} radius="md" />
+          </Stack>
+        ) : notificationsQuery.isError ? (
+          <Alert color="red" title="Couldn't load your notifications">
+            <Text size="sm" mb="sm">
+              Check your connection and try again.
+            </Text>
+            <Button onClick={() => notificationsQuery.refetch()}>Retry</Button>
+          </Alert>
+        ) : notificationsList.length === 0 ? (
+          <Card padding="lg">
+            <Text c="dimmed">No notifications yet.</Text>
+          </Card>
+        ) : (
+          <Stack gap="sm">
+            {notificationsList.map((notification) => {
+              const actor = notification.actor;
+              const relativeTime = formatRelativeTime(notification.createdAt);
+              return (
+                <UnstyledButton
+                  key={notification._id}
+                  onClick={() => handleRowClick(notification)}
+                  aria-label={`${actor?.name ?? "Someone"} ${notificationText(notification.type)}${relativeTime ? `, ${relativeTime}` : ""}`}>
+                  <Card
+                    padding="sm"
+                    withBorder={!notification.isRead}
+                    style={
+                      notification.isRead
+                        ? undefined
+                        : { backgroundColor: "var(--mantine-color-violet-light)", borderColor: "var(--mantine-color-violet-light-color)" }
+                    }>
+                    <Group gap="sm" wrap="nowrap" align="flex-start">
+                      <Avatar src={actor?.photo} alt={actor?.name ?? "User"} radius="xl" size={40}>
+                        {actor?.name?.[0] ?? "?"}
+                      </Avatar>
+                      <Box style={{ flex: 1, minWidth: 0 }}>
+                        <Text size="sm">
+                          <Text span fw={700}>
+                            {actor?.name ?? "Someone"}{" "}
+                          </Text>
+                          {notificationText(notification.type)}
+                        </Text>
+                        {relativeTime && (
+                          <Text size="xs" c="dimmed">
+                            {relativeTime}
+                          </Text>
+                        )}
+                      </Box>
+                      {!notification.isRead && (
+                        <Box
+                          mt={6}
+                          w={8}
+                          h={8}
+                          style={{ borderRadius: 999, backgroundColor: "var(--mantine-color-violet-filled)" }}
+                          aria-hidden
+                        />
+                      )}
+                    </Group>
+                  </Card>
+                </UnstyledButton>
+              );
+            })}
+          </Stack>
+        )}
+      </Stack>
+    </Container>
+  );
+}

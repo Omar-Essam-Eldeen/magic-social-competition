@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Alert,
   Avatar,
@@ -10,6 +10,7 @@ import {
   Button,
   Card,
   Container,
+  FileInput,
   Group,
   PasswordInput,
   Skeleton,
@@ -18,8 +19,9 @@ import {
   Text,
   Title,
 } from "@mantine/core";
+import { notifications } from "@mantine/notifications";
 import { getProfile } from "../../api/Profile/api.ts";
-import { getBookmarks, getUserPosts } from "../../api/Users/api.ts";
+import { getBookmarks, getUserPosts, uploadProfilePhoto } from "../../api/Users/api.ts";
 import { ChangePasswordSchema, type ChangePasswordFormData } from "../../api/Auth/schema.ts";
 import { useAuth } from "../../context/useAuth.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
@@ -42,10 +44,25 @@ function Count({ value, label }: { value: number; label: string }) {
 }
 
 export default function Profile() {
-  const { changePassword } = useAuth();
+  const { changePassword, refreshUser } = useAuth();
+  const queryClient = useQueryClient();
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"posts" | "saved">("posts");
+
+  const photoMutation = useMutation({
+    mutationFn: (photo: File) => uploadProfilePhoto(photo),
+    onSuccess: async () => {
+      await refreshUser();
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: () =>
+      notifications.show({ color: "red", title: "Couldn't change your photo", message: "Try again." }),
+  });
+
+  const handlePhotoChange = (file: File | null) => {
+    if (file) photoMutation.mutate(file);
+  };
 
   const profileQuery = useQuery({ queryKey: ["profile"], queryFn: getProfile });
   const user = profileQuery.data?.data;
@@ -149,6 +166,16 @@ export default function Profile() {
               <Count value={user.followersCount ?? 0} label="Followers" />
               <Count value={user.followingCount ?? 0} label="Following" />
             </Group>
+            <FileInput
+              aria-label="Change profile photo"
+              placeholder="Change photo"
+              accept="image/*"
+              clearable
+              disabled={photoMutation.isPending}
+              onChange={handlePhotoChange}
+              mt="md"
+              maw={260}
+            />
           </Box>
         </Card>
 

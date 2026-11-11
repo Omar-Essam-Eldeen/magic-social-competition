@@ -6,6 +6,8 @@ import { GuestRoute, ProtectedRoute } from "./components/Guards/ProtectedRoutes.
 import PostDetails from "./pages/Posts/PostDetails.tsx";
 import Profile from "./pages/Profile/Profile.tsx";
 import Bookmarks from "./pages/Posts/Bookmarks.tsx";
+import Notifications from "./pages/Notifications/Notifications.tsx";
+import UserProfile from "./pages/Users/UserProfile.tsx";
 
 export default function AppRoutes() {
   return (
@@ -49,6 +51,22 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Bookmarks />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute>
+            <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/users/:id"
+        element={
+          <ProtectedRoute>
+            <UserProfile />
           </ProtectedRoute>
         }
       />

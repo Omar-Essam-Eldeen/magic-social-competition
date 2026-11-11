@@ -72,5 +72,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
 
-  return <AuthContext.Provider value={{ user, loading, login, signup, logout, changePassword }}>{children}</AuthContext.Provider>;
+  // Re-fetch the profile and update the current user (e.g. after a
+  // profile-photo upload, so the new photo shows everywhere at once).
+  const refreshUser = async () => {
+    const profile = await getProfile();
+    setUser(profile.data);
+  };
+
+  return (
+    <AuthContext.Provider value={{ user, loading, login, signup, logout, changePassword, refreshUser }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }

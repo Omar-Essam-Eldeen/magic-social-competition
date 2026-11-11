@@ -22,6 +22,7 @@ import type { Post } from "../../types.ts";
 import type { UpdatePostReq } from "../../api/Posts/types.ts";
 import { bookmarkPost, deletePost, likePost, sharePost, updatePost } from "../../api/Posts/api.ts";
 import { useAuth } from "../../context/useAuth.ts";
+import LikersModal from "./LikersModal.tsx";
 
 const LIKED_COLOR = "#fb4d6d";
 const SAVED_COLOR = "#8b5cf6";
@@ -54,6 +55,7 @@ export default function PostCard({ post }: { post: Post }) {
   const previewRef = useRef<string | null>(null);
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
   const [likePop, setLikePop] = useState(false);
+  const [likersOpen, setLikersOpen] = useState(false);
 
   // Release the temporary object URL when the card unmounts.
   useEffect(() => {
@@ -199,13 +201,20 @@ export default function PostCard({ post }: { post: Post }) {
   return (
     <Card padding="lg">
       <Group gap="sm" mb="sm">
-        <Avatar src={post.user.photo} alt={post.user.name} radius="xl" size={46}>
-          {post.user.name?.[0]}
-        </Avatar>
+        <UnstyledButton
+          aria-label={`View ${post.user.name}'s profile`}
+          onClick={() => navigate(`/users/${post.user._id}`)}
+          style={{ display: "flex" }}>
+          <Avatar src={post.user.photo} alt={post.user.name} radius="xl" size={46}>
+            {post.user.name?.[0]}
+          </Avatar>
+        </UnstyledButton>
         <div>
-          <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
-            {post.user.name}
-          </Text>
+          <UnstyledButton onClick={() => navigate(`/users/${post.user._id}`)} aria-label={`View ${post.user.name}'s profile`}>
+            <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
+              {post.user.name}
+            </Text>
+          </UnstyledButton>
           <Text size="xs" c="dimmed">
             @{post.user.username}
             {relativeTime ? ` · ${relativeTime}` : ""}
@@ -345,7 +354,11 @@ export default function PostCard({ post }: { post: Post }) {
             onClick={handleLike}>
             <Heart size={18} color={liked ? LIKED_COLOR : undefined} fill={liked ? LIKED_COLOR : "none"} />
           </ActionIcon>
-          <Text size="sm">{likesCount}</Text>
+          <UnstyledButton
+            aria-label={`View who liked this post (${likesCount} likes)`}
+            onClick={() => setLikersOpen(true)}>
+            <Text size="sm">{likesCount}</Text>
+          </UnstyledButton>
         </Group>
 
         <Group gap={4}>
@@ -407,6 +420,8 @@ export default function PostCard({ post }: { post: Post }) {
         title={lightbox?.alt ?? "Photo"}>
         {lightbox && <Image src={lightbox.src} alt={lightbox.alt} radius="md" />}
       </Modal>
+
+      <LikersModal postId={likersOpen ? post._id : null} onClose={() => setLikersOpen(false)} />
     </Card>
   );
 }
