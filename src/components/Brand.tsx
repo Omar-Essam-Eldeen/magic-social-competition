@@ -1,8 +1,10 @@
 import { Group, Image, Title } from "@mantine/core";
+import { useLanguage } from "../context/useLanguage.ts";
 
 /** The golden-M artwork from public/logo.png — the one and only logo mark. */
 export function LogoMark({ size = 36 }: { size?: number }) {
-  return <Image src="/logo.png" alt="Magic Social logo" w={size} h={size} radius="md" fit="cover" />;
+  const { t } = useLanguage();
+  return <Image src="/logo.png" alt={t.common.logoAlt} w={size} h={size} radius="md" fit="cover" />;
 }
 
 /** Logo mark + "Magic Social" wordmark in Sora. */

@@ -4,19 +4,22 @@ import { ActionIcon, Avatar, Box, Button, Card, FileInput, Group, Image, Stack, 
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { formatDistanceToNow } from "date-fns";
+import { ar, enUS } from "date-fns/locale";
 import { Heart, MessageCircle, Pencil, Trash2 } from "lucide-react";
 import type { Comment } from "../../../api/Posts/Comments/types.ts";
 import { createReply, deleteComment, getReplies, likeComment, updateComment } from "../../../api/Posts/Comments/api.ts";
 import { useAuth } from "../../../context/useAuth.ts";
+import { useLanguage } from "../../../context/useLanguage.ts";
+import type { Language } from "../../../i18n/dictionary.ts";
 
 const LIKED_COLOR = "#fb4d6d";
 
 /** Relative time ("2h ago"); never renders "Invalid Date". */
-function formatRelativeTime(value?: string): string {
+function formatRelativeTime(value: string | undefined, lang: Language): string {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return formatDistanceToNow(date, { addSuffix: true });
+  return formatDistanceToNow(date, { addSuffix: true, locale: lang === "ar" ? ar : enUS });
 }
 
 export default function CommentItem({
@@ -34,6 +37,7 @@ export default function CommentItem({
   nested?: boolean;
 }) {
   const { user } = useAuth();
+  const { t, lang } = useLanguage();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.content);
@@ -80,13 +84,13 @@ export default function CommentItem({
   // C-3: a comment whose author is gone (deleted user / malformed data) must
   // not crash — fall back to "Deleted user".
   const creator = comment.commentCreator;
-  const creatorName = creator?.name ?? "Deleted user";
+  const creatorName = creator?.name ?? t.common.deletedUser;
   const isMine = user?._id === creator?._id;
   // The API lets the comment owner OR the post owner delete a comment.
   const canDelete = isMine || user?._id === postOwnerId;
   const liked = user ? (comment.likes ?? []).includes(user._id) : false;
   const likesCount = (comment.likes ?? []).length;
-  const relativeTime = formatRelativeTime(comment.createdAt);
+  const relativeTime = formatRelativeTime(comment.createdAt, lang);
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
@@ -107,14 +111,14 @@ export default function CommentItem({
     mutationFn: () => likeComment(postId, comment._id),
     onSuccess: refresh,
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't like this comment", message: "Try again." }),
+      notifications.show({ color: "red", title: t.comment.likeErrorTitle, message: t.common.tryAgain }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: () => deleteComment(postId, comment._id),
     onSuccess: refresh,
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't delete this comment", message: "Try again." }),
+      notifications.show({ color: "red", title: t.comment.deleteErrorTitle, message: t.common.tryAgain }),
   });
 
   const updateMutation = useMutation({
@@ -140,14 +144,14 @@ export default function CommentItem({
       refresh();
     },
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't post your reply", message: "Try again." }),
+      notifications.show({ color: "red", title: t.comment.replyErrorTitle, message: t.common.tryAgain }),
   });
 
   const handleDelete = () => {
     modals.openConfirmModal({
-      title: "Delete this comment?",
-      children: <Text size="sm">This can&apos;t be undone.</Text>,
-      labels: { confirm: "Delete", cancel: "Cancel" },
+      title: t.comment.deleteTitle,
+      children: <Text size="sm">{t.comment.deleteText}</Text>,
+      labels: { confirm: t.common.delete, cancel: t.common.cancel },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(),
     });
@@ -189,7 +193,7 @@ export default function CommentItem({
         <>
           <Group gap="xs" align="flex-end">
             <TextInput
-              aria-label="Edit comment"
+              aria-label={t.comment.editAria}
               value={draft}
               onChange={(e) => setDraft(e.currentTarget.value)}
               style={{ flex: 1 }}
@@ -199,19 +203,19 @@ export default function CommentItem({
               loading={updateMutation.isPending}
               disabled={!draft.trim() && !image}
               onClick={() => updateMutation.mutate({ content: draft.trim(), image })}>
-              Save
+              {t.common.save}
             </Button>
             <Button size="xs" variant="subtle" onClick={handleCancelEdit}>
-              Cancel
+              {t.common.cancel}
             </Button>
           </Group>
           {preview ? (
-            <Image src={preview} alt="New comment image preview" loading="lazy" radius="md" mt="xs" />
+            <Image src={preview} alt={t.comment.newImagePreviewAlt} loading="lazy" radius="md" mt="xs" />
           ) : (
             comment.image && (
               <Image
                 src={comment.image}
-                alt={`Photo in a comment by ${creatorName}`}
+                alt={t.comment.photoAlt(creatorName)}
                 loading="lazy"
                 radius="md"
                 mt="xs"
@@ -219,8 +223,8 @@ export default function CommentItem({
             )
           )}
           <FileInput
-            aria-label="Change comment image"
-            placeholder="Change image (optional)"
+            aria-label={t.comment.changeImageAria}
+            placeholder={t.comment.changeImagePlaceholder}
             accept="image/*"
             value={image}
             onChange={handleImageChange}
@@ -229,7 +233,7 @@ export default function CommentItem({
           />
           {updateMutation.isError && (
             <Text c="red" size="sm">
-              Couldn&apos;t save — try again.
+              {t.comment.saveError}
             </Text>
           )}
         </>
@@ -239,7 +243,7 @@ export default function CommentItem({
           {comment.image && (
             <Image
               src={comment.image}
-              alt={`Photo in a comment by ${creatorName}`}
+              alt={t.comment.photoAlt(creatorName)}
               loading="lazy"
               radius="md"
               mt="xs"
@@ -251,7 +255,7 @@ export default function CommentItem({
       <Group gap="xs" mt="sm">
         <ActionIcon
           variant="subtle"
-          aria-label={`${likesCount} likes`}
+          aria-label={t.post.likesAria(likesCount)}
           aria-pressed={liked}
           disabled={likeMutation.isPending}
           onClick={() => likeMutation.mutate()}>
@@ -264,18 +268,18 @@ export default function CommentItem({
             size="xs"
             leftSection={<MessageCircle size={16} />}
             onClick={() => setReplying((v) => !v)}>
-            Reply
+            {t.comment.replyButton}
           </Button>
         )}
         {isMine && !editing && (
-          <ActionIcon variant="subtle" aria-label="Edit comment" onClick={handleStartEdit}>
+          <ActionIcon variant="subtle" aria-label={t.comment.editAria} onClick={handleStartEdit}>
             <Pencil size={16} />
           </ActionIcon>
         )}
         {canDelete && (
           <ActionIcon
             variant="subtle"
-            aria-label="Delete comment"
+            aria-label={t.comment.deleteAria}
             color="red"
             disabled={deleteMutation.isPending}
             onClick={handleDelete}>
@@ -294,8 +298,8 @@ export default function CommentItem({
           <Stack gap="xs" mt="sm">
             <Group gap="xs" align="flex-end">
               <TextInput
-                aria-label={`Reply to ${creatorName}`}
-                placeholder={`Reply to ${creatorName}...`}
+                aria-label={t.comment.replyAria(creatorName)}
+                placeholder={t.comment.replyPlaceholder(creatorName)}
                 value={replyContent}
                 onChange={(e) => setReplyContent(e.currentTarget.value)}
                 style={{ flex: 1 }}
@@ -305,7 +309,7 @@ export default function CommentItem({
                 size="xs"
                 loading={replyMutation.isPending}
                 disabled={!replyContent.trim() && !replyImage}>
-                Post
+                {t.common.post}
               </Button>
               <Button
                 size="xs"
@@ -315,12 +319,12 @@ export default function CommentItem({
                   setReplyContent("");
                   setReplyImage(null);
                 }}>
-                Cancel
+                {t.common.cancel}
               </Button>
             </Group>
             <FileInput
-              aria-label="Attach an image to your reply"
-              placeholder="Add an image (optional)"
+              aria-label={t.comment.attachImageAria}
+              placeholder={t.comment.attachImagePlaceholder}
               accept="image/*"
               value={replyImage}
               onChange={setReplyImage}
@@ -329,14 +333,14 @@ export default function CommentItem({
             />
             {replyMutation.isError && (
               <Text c="red" size="sm">
-                Couldn&apos;t post your reply — try again.
+                {t.comment.replyError}
               </Text>
             )}
           </Stack>
         </form>
       )}
       {!nested && replies.length > 0 && (
-        <Box ml="xl" pl="md" mt="sm" style={{ borderLeft: "2px solid var(--mantine-color-default-border)" }}>
+        <Box ms="xl" ps="md" mt="sm" style={{ borderInlineStart: "2px solid var(--mantine-color-default-border)" }}>
           <Stack gap="sm">
             {replies.map((reply) => (
               <CommentItem key={reply._id} comment={reply} postId={postId} postOwnerId={postOwnerId} nested />

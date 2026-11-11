@@ -17,11 +17,14 @@ import {
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { formatDistanceToNow } from "date-fns";
+import { ar, enUS } from "date-fns/locale";
 import { Bookmark, Heart, MessageCircle, Pencil, Share2, Trash2 } from "lucide-react";
 import type { Post } from "../../types.ts";
 import type { UpdatePostReq } from "../../api/Posts/types.ts";
 import { bookmarkPost, deletePost, likePost, sharePost, updatePost } from "../../api/Posts/api.ts";
 import { useAuth } from "../../context/useAuth.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
+import type { Language } from "../../i18n/dictionary.ts";
 import LikersModal from "./LikersModal.tsx";
 
 const LIKED_COLOR = "#fb4d6d";
@@ -31,11 +34,11 @@ const SAVED_COLOR = "#8b5cf6";
 const POST_IMAGE_STYLE = { aspectRatio: "16 / 9", objectFit: "cover" } as const;
 
 /** Relative time ("2h ago"); never renders "Invalid Date". */
-function formatRelativeTime(value?: string): string {
+function formatRelativeTime(value: string | undefined, lang: Language): string {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return formatDistanceToNow(date, { addSuffix: true });
+  return formatDistanceToNow(date, { addSuffix: true, locale: lang === "ar" ? ar : enUS });
 }
 
 function capitalize(value?: string): string {
@@ -45,6 +48,7 @@ function capitalize(value?: string): string {
 
 export default function PostCard({ post }: { post: Post }) {
   const { user } = useAuth();
+  const { t, lang } = useLanguage();
   const navigate = useNavigate();
   const location = useLocation();
   const queryClient = useQueryClient();
@@ -107,21 +111,21 @@ export default function PostCard({ post }: { post: Post }) {
     mutationFn: (postId: string) => likePost(postId),
     onSuccess: refresh,
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't like this post", message: "Try again." }),
+      notifications.show({ color: "red", title: t.post.likeErrorTitle, message: t.common.tryAgain }),
   });
 
   const shareMutation = useMutation({
     mutationFn: (postId: string) => sharePost(postId),
     onSuccess: refresh,
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't share this post", message: "Try again." }),
+      notifications.show({ color: "red", title: t.post.shareErrorTitle, message: t.common.tryAgain }),
   });
 
   const bookmarkMutation = useMutation({
     mutationFn: (postId: string) => bookmarkPost(postId),
     onSuccess: refresh,
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't save this post", message: "Try again." }),
+      notifications.show({ color: "red", title: t.post.saveErrorTitle, message: t.common.tryAgain }),
   });
 
   const updateMutation = useMutation({
@@ -132,7 +136,7 @@ export default function PostCard({ post }: { post: Post }) {
       refresh();
     },
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't save your changes", message: "Try again." }),
+      notifications.show({ color: "red", title: t.post.updateErrorTitle, message: t.common.tryAgain }),
   });
 
   const deleteMutation = useMutation({
@@ -144,14 +148,14 @@ export default function PostCard({ post }: { post: Post }) {
       if (location.pathname.startsWith("/posts/")) navigate("/");
     },
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't delete this post", message: "Try again." }),
+      notifications.show({ color: "red", title: t.post.deleteErrorTitle, message: t.common.tryAgain }),
   });
 
   const handleDelete = () => {
     modals.openConfirmModal({
-      title: "Delete this post?",
-      children: <Text size="sm">This can&apos;t be undone.</Text>,
-      labels: { confirm: "Delete", cancel: "Cancel" },
+      title: t.post.deleteTitle,
+      children: <Text size="sm">{t.post.deleteText}</Text>,
+      labels: { confirm: t.common.delete, cancel: t.common.cancel },
       confirmProps: { color: "red" },
       onConfirm: () => deleteMutation.mutate(),
     });
@@ -181,28 +185,38 @@ export default function PostCard({ post }: { post: Post }) {
   if (!post.user) {
     return (
       <Card padding="lg">
-        <Text c="dimmed">Post unavailable</Text>
+        <Text c="dimmed">{t.post.unavailable}</Text>
       </Card>
     );
   }
 
-  const relativeTime = formatRelativeTime(post.createdAt);
-  const privacy = capitalize(post.privacy);
+  const relativeTime = formatRelativeTime(post.createdAt, lang);
+  // Privacy is a free-form API string — map the known values, fall back to
+  // the capitalized raw value for anything unknown.
+  const privacyKey = post.privacy?.toLowerCase();
+  const privacy =
+    privacyKey === "public"
+      ? t.post.privacyPublic
+      : privacyKey === "friends"
+        ? t.post.privacyFriends
+        : privacyKey === "only me" || privacyKey === "onlyme" || privacyKey === "only_me"
+          ? t.post.privacyOnlyMe
+          : capitalize(post.privacy);
   const likesCount = post.likesCount ?? 0;
   const commentsCount = post.commentsCount ?? 0;
   const sharesCount = post.sharesCount ?? 0;
   const topComment = post.topComment;
-  const topCommentAuthor = topComment?.commentCreator?.name ?? "Deleted user";
+  const topCommentAuthor = topComment?.commentCreator?.name ?? t.common.deletedUser;
   const sharedPost = post.sharedPost;
-  const sharedAuthorName = sharedPost?.user?.name ?? "Deleted user";
-  const postImageAlt = `Photo in a post by ${post.user.name}`;
-  const sharedImageAlt = `Photo in a post by ${sharedAuthorName}`;
+  const sharedAuthorName = sharedPost?.user?.name ?? t.common.deletedUser;
+  const postImageAlt = t.post.photoAlt(post.user.name);
+  const sharedImageAlt = t.post.photoAlt(sharedAuthorName);
 
   return (
     <Card padding="lg">
       <Group gap="sm" mb="sm">
         <UnstyledButton
-          aria-label={`View ${post.user.name}'s profile`}
+          aria-label={t.post.viewProfile(post.user.name)}
           onClick={() => navigate(`/users/${post.user._id}`)}
           style={{ display: "flex" }}>
           <Avatar src={post.user.photo} alt={post.user.name} radius="xl" size={46}>
@@ -210,13 +224,13 @@ export default function PostCard({ post }: { post: Post }) {
           </Avatar>
         </UnstyledButton>
         <div>
-          <UnstyledButton onClick={() => navigate(`/users/${post.user._id}`)} aria-label={`View ${post.user.name}'s profile`}>
+          <UnstyledButton onClick={() => navigate(`/users/${post.user._id}`)} aria-label={t.post.viewProfile(post.user.name)}>
             <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
               {post.user.name}
             </Text>
           </UnstyledButton>
           <Text size="xs" c="dimmed">
-            @{post.user.username}
+            <span dir="ltr">@{post.user.username}</span>
             {relativeTime ? ` · ${relativeTime}` : ""}
             {privacy ? ` · ${privacy}` : ""}
           </Text>
@@ -226,7 +240,7 @@ export default function PostCard({ post }: { post: Post }) {
       {editing ? (
         <>
           <Textarea
-            aria-label="Edit post text"
+            aria-label={t.post.editTextAria}
             value={draft}
             onChange={(e) => setDraft(e.currentTarget.value)}
             autosize
@@ -234,7 +248,7 @@ export default function PostCard({ post }: { post: Post }) {
             mb="sm"
           />
           {preview ? (
-            <Image src={preview} alt="New image preview" loading="lazy" radius="md" style={POST_IMAGE_STYLE} mb="sm" />
+            <Image src={preview} alt={t.post.newImagePreviewAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} mb="sm" />
           ) : (
             post.image && (
               <Image
@@ -248,8 +262,8 @@ export default function PostCard({ post }: { post: Post }) {
             )
           )}
           <FileInput
-            aria-label="Change post image"
-            placeholder="Change image (optional)"
+            aria-label={t.post.changeImageAria}
+            placeholder={t.post.changeImagePlaceholder}
             accept="image/*"
             value={image}
             onChange={handleImageChange}
@@ -262,10 +276,10 @@ export default function PostCard({ post }: { post: Post }) {
               loading={updateMutation.isPending}
               disabled={!draft.trim() && !image}
               onClick={() => updateMutation.mutate({ body: draft.trim(), image })}>
-              Save
+              {t.common.save}
             </Button>
             <Button size="xs" variant="subtle" onClick={handleCancelEdit}>
-              Cancel
+              {t.common.cancel}
             </Button>
           </Group>
         </>
@@ -287,9 +301,9 @@ export default function PostCard({ post }: { post: Post }) {
               <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
                 {sharedAuthorName}
               </Text>
-              {formatRelativeTime(sharedPost.createdAt) && (
+              {formatRelativeTime(sharedPost.createdAt, lang) && (
                 <Text size="xs" c="dimmed">
-                  {formatRelativeTime(sharedPost.createdAt)}
+                  {formatRelativeTime(sharedPost.createdAt, lang)}
                 </Text>
               )}
             </div>
@@ -301,7 +315,7 @@ export default function PostCard({ post }: { post: Post }) {
           )}
           {sharedPost.image && (
             <UnstyledButton
-              aria-label={`View full ${sharedImageAlt}`}
+              aria-label={t.post.viewFullPhoto(sharedImageAlt)}
               onClick={() => setLightbox({ src: sharedPost.image as string, alt: sharedImageAlt })}
               style={{ display: "block", width: "100%" }}>
               <Image src={sharedPost.image} alt={sharedImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
@@ -312,7 +326,7 @@ export default function PostCard({ post }: { post: Post }) {
 
       {!editing && post.image && (
         <UnstyledButton
-          aria-label={`View full ${postImageAlt}`}
+          aria-label={t.post.viewFullPhoto(postImageAlt)}
           onClick={() => setLightbox({ src: post.image as string, alt: postImageAlt })}
           style={{ display: "block", width: "100%", marginBottom: 12 }}>
           <Image src={post.image} alt={postImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
@@ -332,7 +346,7 @@ export default function PostCard({ post }: { post: Post }) {
           }}
           tabIndex={0}
           role="button"
-          aria-label={`Top comment by ${topCommentAuthor}: view post`}>
+          aria-label={t.post.topCommentAria(topCommentAuthor)}>
           <Text size="sm">
             <Text span fw={700}>
               {topCommentAuthor}:{" "}
@@ -346,7 +360,7 @@ export default function PostCard({ post }: { post: Post }) {
         <Group gap={4}>
           <ActionIcon
             variant="subtle"
-            aria-label={`${likesCount} likes`}
+            aria-label={t.post.likesAria(likesCount)}
             aria-pressed={liked}
             disabled={likeMutation.isPending}
             className={likePop ? "like-pop" : undefined}
@@ -355,7 +369,7 @@ export default function PostCard({ post }: { post: Post }) {
             <Heart size={18} color={liked ? LIKED_COLOR : undefined} fill={liked ? LIKED_COLOR : "none"} />
           </ActionIcon>
           <UnstyledButton
-            aria-label={`View who liked this post (${likesCount} likes)`}
+            aria-label={t.post.viewLikersAria(likesCount)}
             onClick={() => setLikersOpen(true)}>
             <Text size="sm">{likesCount}</Text>
           </UnstyledButton>
@@ -364,7 +378,7 @@ export default function PostCard({ post }: { post: Post }) {
         <Group gap={4}>
           <ActionIcon
             variant="subtle"
-            aria-label={`${commentsCount} comments`}
+            aria-label={t.post.commentsAria(commentsCount)}
             onClick={() => navigate(`/posts/${post._id}`)}>
             <MessageCircle size={18} />
           </ActionIcon>
@@ -374,7 +388,7 @@ export default function PostCard({ post }: { post: Post }) {
         <Group gap={4}>
           <ActionIcon
             variant="subtle"
-            aria-label={`${sharesCount} shares`}
+            aria-label={t.post.sharesAria(sharesCount)}
             disabled={shareMutation.isPending}
             onClick={() => shareMutation.mutate(post._id)}>
             <Share2 size={18} />
@@ -384,7 +398,7 @@ export default function PostCard({ post }: { post: Post }) {
 
         <ActionIcon
           variant="subtle"
-          aria-label={post.bookmarked ? "Remove bookmark" : "Bookmark post"}
+          aria-label={post.bookmarked ? t.post.removeBookmarkAria : t.post.bookmarkAria}
           aria-pressed={post.bookmarked}
           disabled={bookmarkMutation.isPending}
           onClick={() => bookmarkMutation.mutate(post._id)}>
@@ -397,12 +411,12 @@ export default function PostCard({ post }: { post: Post }) {
 
         {isMine && !editing && (
           <>
-            <ActionIcon variant="subtle" aria-label="Edit post" onClick={handleStartEdit}>
+            <ActionIcon variant="subtle" aria-label={t.post.editAria} onClick={handleStartEdit}>
               <Pencil size={16} />
             </ActionIcon>
             <ActionIcon
               variant="subtle"
-              aria-label="Delete post"
+              aria-label={t.post.deleteAria}
               color="red"
               disabled={deleteMutation.isPending}
               onClick={handleDelete}>
@@ -417,7 +431,7 @@ export default function PostCard({ post }: { post: Post }) {
         onClose={() => setLightbox(null)}
         size="lg"
         centered
-        title={lightbox?.alt ?? "Photo"}>
+        title={lightbox?.alt ?? t.common.photo}>
         {lightbox && <Image src={lightbox.src} alt={lightbox.alt} radius="md" />}
       </Modal>
 

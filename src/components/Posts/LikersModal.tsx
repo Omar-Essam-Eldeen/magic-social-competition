@@ -2,6 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import { Alert, Avatar, Button, Group, Modal, Skeleton, Stack, Text, UnstyledButton } from "@mantine/core";
 import { getPostLikers } from "../../api/Posts/api.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 
 interface LikersModalProps {
   postId: string | null;
@@ -9,6 +10,7 @@ interface LikersModalProps {
 }
 
 export default function LikersModal({ postId, onClose }: LikersModalProps) {
+  const { t } = useLanguage();
   const navigate = useNavigate();
 
   const likersQuery = useQuery({
@@ -24,7 +26,7 @@ export default function LikersModal({ postId, onClose }: LikersModalProps) {
   };
 
   return (
-    <Modal opened={postId !== null} onClose={onClose} title="Liked by" centered>
+    <Modal opened={postId !== null} onClose={onClose} title={t.post.likedByTitle} centered>
       {likersQuery.isPending ? (
         <Stack gap="sm">
           <Skeleton height={48} radius="md" />
@@ -32,14 +34,14 @@ export default function LikersModal({ postId, onClose }: LikersModalProps) {
           <Skeleton height={48} radius="md" />
         </Stack>
       ) : likersQuery.isError ? (
-        <Alert color="red" title="Couldn't load who liked this post">
+        <Alert color="red" title={t.post.likersLoadErrorTitle}>
           <Text size="sm" mb="sm">
-            Check your connection and try again.
+            {t.errors.checkConnection}
           </Text>
-          <Button onClick={() => likersQuery.refetch()}>Retry</Button>
+          <Button onClick={() => likersQuery.refetch()}>{t.common.retry}</Button>
         </Alert>
       ) : likers.length === 0 ? (
-        <Text c="dimmed">No likes yet.</Text>
+        <Text c="dimmed">{t.post.noLikes}</Text>
       ) : (
         <Stack gap="sm">
           {likers.map((liker) => (
@@ -53,7 +55,7 @@ export default function LikersModal({ postId, onClose }: LikersModalProps) {
                     {liker.name}
                   </Text>
                   <Text size="xs" c="dimmed">
-                    @{liker.username}
+                    <span dir="ltr">@{liker.username}</span>
                   </Text>
                 </div>
               </Group>

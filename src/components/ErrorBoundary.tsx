@@ -1,5 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
 import { Button, Card, Container, Stack, Text, Title } from "@mantine/core";
+import { useLanguage } from "../context/useLanguage.ts";
 
 interface ErrorBoundaryProps {
   children: ReactNode;
@@ -7,6 +8,23 @@ interface ErrorBoundaryProps {
 
 interface ErrorBoundaryState {
   hasError: boolean;
+}
+
+/** Fallback UI rendered by the class boundary — a function component so it
+    can read the current language via the hook (class components can't). */
+function ErrorFallback() {
+  const { t } = useLanguage();
+  return (
+    <Container size={640} px="md" py="xl">
+      <Card padding="lg">
+        <Stack gap="md">
+          <Title order={3}>{t.errors.unexpectedTitle}</Title>
+          <Text c="dimmed">{t.errors.unexpectedText}</Text>
+          <Button onClick={() => window.location.reload()}>{t.common.retry}</Button>
+        </Stack>
+      </Card>
+    </Container>
+  );
 }
 
 // Catches render errors anywhere below it so one broken component cannot
@@ -28,17 +46,7 @@ export default class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBo
 
   render(): ReactNode {
     if (this.state.hasError) {
-      return (
-        <Container size={640} px="md" py="xl">
-          <Card padding="lg">
-            <Stack gap="md">
-              <Title order={3}>Something went wrong</Title>
-              <Text c="dimmed">The app hit an unexpected error. Reloading usually fixes it.</Text>
-              <Button onClick={() => window.location.reload()}>Retry</Button>
-            </Stack>
-          </Card>
-        </Container>
-      );
+      return <ErrorFallback />;
     }
     return this.props.children;
   }

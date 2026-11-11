@@ -2,12 +2,14 @@ import { useQuery } from "@tanstack/react-query";
 import { Alert, Avatar, Button, Card, Group, Skeleton, Stack, Text, Title } from "@mantine/core";
 import { getSuggestions } from "../../api/Users/api.ts";
 import { useAuth } from "../../context/useAuth.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 import FollowButton from "./FollowButton.tsx";
 
 const MAX_SUGGESTIONS = 5;
 
 export default function SuggestionsCard() {
   const { user } = useAuth();
+  const { t } = useLanguage();
   // Never fire logged out: Mantine's AppShell.Aside mounts its children even
   // when collapsed, so without this guard the query 401s on /login and the
   // 401 interceptor full-reloads the page in a loop.
@@ -22,7 +24,7 @@ export default function SuggestionsCard() {
   return (
     <Card padding="md">
       <Title order={4} mb="sm">
-        Who to follow
+        {t.suggestions.title}
       </Title>
       {suggestionsQuery.isPending ? (
         <Stack gap="sm">
@@ -38,17 +40,17 @@ export default function SuggestionsCard() {
           ))}
         </Stack>
       ) : suggestionsQuery.isError ? (
-        <Alert color="red" title="Couldn't load suggestions">
+        <Alert color="red" title={t.suggestions.loadErrorTitle}>
           <Text size="sm" mb="sm">
-            Try again — the suggestions couldn't be loaded.
+            {t.suggestions.loadErrorText}
           </Text>
           <Button size="xs" variant="light" onClick={() => suggestionsQuery.refetch()}>
-            Retry
+            {t.common.retry}
           </Button>
         </Alert>
       ) : suggestions.length === 0 ? (
         <Text size="sm" c="dimmed">
-          No suggestions right now
+          {t.suggestions.empty}
         </Text>
       ) : (
         <Stack gap="sm">
@@ -62,7 +64,7 @@ export default function SuggestionsCard() {
                   {suggestion.name}
                 </Text>
                 <Text size="xs" c="dimmed" truncate>
-                  @{suggestion.username}
+                  <span dir="ltr">@{suggestion.username}</span>
                 </Text>
               </div>
               {/* The suggestions endpoint returns no following flag, so every

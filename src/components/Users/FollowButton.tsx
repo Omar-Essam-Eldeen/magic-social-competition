@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { followUser } from "../../api/Users/api.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 
 interface FollowButtonProps {
   userId: string;
@@ -10,6 +11,7 @@ interface FollowButtonProps {
 }
 
 export default function FollowButton({ userId, initialFollowing = false }: FollowButtonProps) {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [following, setFollowing] = useState(initialFollowing);
 
@@ -25,8 +27,8 @@ export default function FollowButton({ userId, initialFollowing = false }: Follo
     onError: () => {
       notifications.show({
         color: "red",
-        title: "Couldn't update follow",
-        message: "Try again.",
+        title: t.errors.followErrorTitle,
+        message: t.common.tryAgain,
       });
     },
   });
@@ -38,7 +40,7 @@ export default function FollowButton({ userId, initialFollowing = false }: Follo
       loading={followMutation.isPending}
       disabled={followMutation.isPending}
       onClick={() => followMutation.mutate()}>
-      {following ? "Following" : "Follow"}
+      {following ? t.common.followingState : t.common.follow}
     </Button>
   );
 }

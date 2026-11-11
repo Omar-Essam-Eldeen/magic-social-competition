@@ -4,8 +4,10 @@ import { Button, Card, FileInput, Image, Stack, Textarea } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { createPost } from "../../api/Posts/api.ts";
 import type { CreatePostReq } from "../../api/Posts/types.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 
 export default function Composer() {
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
   const [image, setImage] = useState<File | null>(null);
@@ -55,7 +57,7 @@ export default function Composer() {
       queryClient.invalidateQueries({ queryKey: ["userPosts"] });
     },
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't create your post", message: "Try again." }),
+      notifications.show({ color: "red", title: t.composer.createErrorTitle, message: t.common.tryAgain }),
   });
 
   return (
@@ -68,26 +70,26 @@ export default function Composer() {
         }}>
         <Stack gap="sm">
           <Textarea
-            aria-label="What's on your mind?"
-            placeholder="What's on your mind?"
+            aria-label={t.composer.ariaLabel}
+            placeholder={t.composer.placeholder}
             value={body}
             onChange={(e) => setBody(e.currentTarget.value)}
             autosize
             minRows={2}
           />
           <FileInput
-            aria-label="Add an image to your post"
-            placeholder="Add an image (optional)"
+            aria-label={t.composer.addImageAria}
+            placeholder={t.composer.addImagePlaceholder}
             accept="image/*"
             value={image}
             onChange={handleImageChange}
             clearable
           />
           {preview && (
-            <Image src={preview} alt="Image preview" loading="lazy" radius="md" style={{ aspectRatio: "16 / 9", objectFit: "cover" }} />
+            <Image src={preview} alt={t.composer.imagePreviewAlt} loading="lazy" radius="md" style={{ aspectRatio: "16 / 9", objectFit: "cover" }} />
           )}
           <Button type="submit" loading={createMutation.isPending} disabled={!body.trim()}>
-            Post
+            {t.composer.postButton}
           </Button>
         </Stack>
       </form>
