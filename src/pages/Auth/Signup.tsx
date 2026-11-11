@@ -18,11 +18,13 @@ import {
 } from "@mantine/core";
 import { isAxiosError } from "axios";
 import { useAuth } from "../../context/useAuth.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 import { LogoMark } from "../../components/Brand.tsx";
-import { RegisterSchema, type RegisterFormData } from "../../api/Auth/schema.ts";
+import { createRegisterSchema, type RegisterFormData } from "../../api/Auth/schema.ts";
 
 export default function Signup() {
   const { signup } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
@@ -33,7 +35,7 @@ export default function Signup() {
     formState: { errors, isSubmitting },
   } = useForm<RegisterFormData>({
     defaultValues: { gender: "male" },
-    resolver: zodResolver(RegisterSchema),
+    resolver: zodResolver(createRegisterSchema(t.validation)),
     mode: "onTouched",
   });
 
@@ -44,11 +46,11 @@ export default function Signup() {
       navigate("/");
     } catch (err) {
       if (isAxiosError(err)) {
-        setError(err.response?.data?.message || "Something went wrong");
+        setError(err.response?.data?.message || t.errors.somethingWentWrong);
       } else if (err instanceof Error && err.message) {
         setError(err.message);
       } else {
-        setError("Something went wrong");
+        setError(t.errors.somethingWentWrong);
       }
     }
   }
@@ -60,7 +62,7 @@ export default function Signup() {
           <LogoMark size={48} />
         </Center>
         <Title order={2} ta="center" mb="md">
-          Create your account
+          {t.auth.createAccount}
         </Title>
 
         {error && (
@@ -71,22 +73,27 @@ export default function Signup() {
 
         <form onSubmit={handleSubmit(handleRegister)}>
           <Stack>
-            <TextInput label="Name" placeholder="Enter your name" {...register("name")} error={errors.name?.message} />
             <TextInput
-              label="Username"
-              placeholder="Enter your username"
+              label={t.auth.name}
+              placeholder={t.auth.namePlaceholder}
+              {...register("name")}
+              error={errors.name?.message}
+            />
+            <TextInput
+              label={t.auth.username}
+              placeholder={t.auth.usernamePlaceholder}
               {...register("username")}
               error={errors.username?.message}
             />
             <TextInput
-              label="Email"
-              placeholder="Enter your email"
+              label={t.auth.email}
+              placeholder={t.auth.emailPlaceholder}
               type="email"
               {...register("email")}
               error={errors.email?.message}
             />
             <TextInput
-              label="Date of birth"
+              label={t.auth.dateOfBirth}
               type="date"
               {...register("dateOfBirth")}
               error={errors.dateOfBirth?.message}
@@ -96,34 +103,34 @@ export default function Signup() {
               control={control}
               render={({ field }) => (
                 <Radio.Group
-                  label="Gender"
+                  label={t.auth.gender}
                   value={field.value}
                   onChange={field.onChange}
                   error={errors.gender?.message}>
                   <Group mt="xs">
-                    <Radio value="male" label="Male" />
-                    <Radio value="female" label="Female" />
+                    <Radio value="male" label={t.auth.male} />
+                    <Radio value="female" label={t.auth.female} />
                   </Group>
                 </Radio.Group>
               )}
             />
             <PasswordInput
-              label="Password"
-              placeholder="Enter your password"
+              label={t.auth.password}
+              placeholder={t.auth.passwordPlaceholder}
               {...register("password")}
               error={errors.password?.message}
             />
             <PasswordInput
-              label="Re-password"
-              placeholder="Repeat your password"
+              label={t.auth.rePassword}
+              placeholder={t.auth.rePasswordPlaceholder}
               {...register("rePassword")}
               error={errors.rePassword?.message}
             />
             <Button type="submit" loading={isSubmitting} fullWidth>
-              Sign up
+              {t.common.signup}
             </Button>
             <Text ta="center" size="sm">
-              Already have an account? <Link to="/login">Log in</Link>
+              {t.auth.haveAccount} <Link to="/login">{t.common.login}</Link>
             </Text>
           </Stack>
         </form>

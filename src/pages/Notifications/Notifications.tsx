@@ -15,39 +15,42 @@ import {
   UnstyledButton,
 } from "@mantine/core";
 import { formatDistanceToNow } from "date-fns";
+import { ar, enUS } from "date-fns/locale";
 import {
   getNotifications,
   markAllNotificationsRead,
   markNotificationRead,
 } from "../../api/Notifications/api.ts";
 import type { NotificationItem } from "../../api/Notifications/types.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
+import type { Dict, Language } from "../../i18n/dictionary.ts";
 
 /** Relative time ("2h ago"); never renders "Invalid Date". */
-function formatRelativeTime(value?: string): string {
+function formatRelativeTime(value: string | undefined, lang: Language): string {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
-  return formatDistanceToNow(date, { addSuffix: true });
+  return formatDistanceToNow(date, { addSuffix: true, locale: lang === "ar" ? ar : enUS });
 }
 
 /** Human text for a notification type; unknown types are prettified. */
-function notificationText(type: string): string {
+function notificationText(t: Dict, type: string): string {
   switch (type) {
     // Real type values seen live from the API: like_post, comment_post,
     // follow_user. The bare forms are kept as fallbacks.
     case "like_post":
-      return "liked your post";
+      return t.notifications.likedPost;
     case "like_comment":
-      return "liked your comment";
+      return t.notifications.likedComment;
     case "comment_post":
     case "comment":
-      return "commented on your post";
+      return t.notifications.commentedPost;
     case "follow_user":
     case "follow":
-      return "started following you";
+      return t.notifications.startedFollowing;
     case "share_post":
     case "share":
-      return "shared your post";
+      return t.notifications.sharedPost;
     default:
       return type.replace(/_/g, " ");
   }
@@ -56,6 +59,7 @@ function notificationText(type: string): string {
 export default function Notifications() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { t, lang } = useLanguage();
 
   const notificationsQuery = useQuery({ queryKey: ["notifications"], queryFn: () => getNotifications() });
   const notificationsList = notificationsQuery.data?.data ?? [];
@@ -89,7 +93,7 @@ export default function Notifications() {
       <Stack gap="md">
         <Group justify="space-between" align="center">
           <Title order={2} ff="Sora, system-ui, sans-serif">
-            Notifications
+            {t.notifications.title}
           </Title>
           {unreadCount > 0 && (
             <Button
@@ -97,7 +101,7 @@ export default function Notifications() {
               size="sm"
               loading={markAllReadMutation.isPending}
               onClick={() => markAllReadMutation.mutate()}>
-              Mark all read
+              {t.notifications.markAllRead}
             </Button>
           )}
         </Group>
@@ -109,26 +113,28 @@ export default function Notifications() {
             <Skeleton height={72} radius="md" />
           </Stack>
         ) : notificationsQuery.isError ? (
-          <Alert color="red" title="Couldn't load your notifications">
+          <Alert color="red" title={t.notifications.loadErrorTitle}>
             <Text size="sm" mb="sm">
-              Check your connection and try again.
+              {t.errors.checkConnection}
             </Text>
-            <Button onClick={() => notificationsQuery.refetch()}>Retry</Button>
+            <Button onClick={() => notificationsQuery.refetch()}>{t.common.retry}</Button>
           </Alert>
         ) : notificationsList.length === 0 ? (
           <Card padding="lg">
-            <Text c="dimmed">No notifications yet.</Text>
+            <Text c="dimmed">{t.notifications.empty}</Text>
           </Card>
         ) : (
           <Stack gap="sm">
             {notificationsList.map((notification) => {
               const actor = notification.actor;
-              const relativeTime = formatRelativeTime(notification.createdAt);
+              const relativeTime = formatRelativeTime(notification.createdAt, lang);
+              const action = notificationText(t, notification.type);
+              const actorName = actor?.name ?? t.notifications.someone;
               return (
                 <UnstyledButton
                   key={notification._id}
                   onClick={() => handleRowClick(notification)}
-                  aria-label={`${actor?.name ?? "Someone"} ${notificationText(notification.type)}${relativeTime ? `, ${relativeTime}` : ""}`}>
+                  aria-label={t.notifications.rowAria(actorName, action, relativeTime)}>
                   <Card
                     padding="sm"
                     withBorder={!notification.isRead}
@@ -138,15 +144,15 @@ export default function Notifications() {
                         : { backgroundColor: "var(--mantine-color-violet-light)", borderColor: "var(--mantine-color-violet-light-color)" }
                     }>
                     <Group gap="sm" wrap="nowrap" align="flex-start">
-                      <Avatar src={actor?.photo} alt={actor?.name ?? "User"} radius="xl" size={40}>
+                      <Avatar src={actor?.photo} alt={actor?.name ?? t.notifications.userFallback} radius="xl" size={40}>
                         {actor?.name?.[0] ?? "?"}
                       </Avatar>
                       <Box style={{ flex: 1, minWidth: 0 }}>
                         <Text size="sm">
                           <Text span fw={700}>
-                            {actor?.name ?? "Someone"}{" "}
+                            {actorName}{" "}
                           </Text>
-                          {notificationText(notification.type)}
+                          {action}
                         </Text>
                         {relativeTime && (
                           <Text size="xs" c="dimmed">

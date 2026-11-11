@@ -5,11 +5,13 @@ import { isAxiosError } from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { Alert, Button, Center, Container, Paper, PasswordInput, Stack, Text, TextInput, Title } from "@mantine/core";
 import { useAuth } from "../../context/useAuth";
+import { useLanguage } from "../../context/useLanguage.ts";
 import { LogoMark } from "../../components/Brand.tsx";
-import { LoginSchema, type LoginFormData } from "../../api/Auth/schema.ts";
+import { createLoginSchema, type LoginFormData } from "../../api/Auth/schema.ts";
 
 export default function Login() {
   const { login } = useAuth();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   const [error, setError] = useState<string | null>(null);
 
@@ -18,7 +20,7 @@ export default function Login() {
     register,
     formState: { errors, isSubmitting },
   } = useForm<LoginFormData>({
-    resolver: zodResolver(LoginSchema),
+    resolver: zodResolver(createLoginSchema(t.validation)),
     mode: "onTouched",
   });
 
@@ -29,11 +31,11 @@ export default function Login() {
       navigate("/");
     } catch (err) {
       if (isAxiosError(err)) {
-        setError(err.response?.data?.message || "Something went wrong");
+        setError(err.response?.data?.message || t.errors.somethingWentWrong);
       } else if (err instanceof Error && err.message) {
         setError(err.message);
       } else {
-        setError("Something went wrong");
+        setError(t.errors.somethingWentWrong);
       }
     }
   }
@@ -45,7 +47,7 @@ export default function Login() {
           <LogoMark size={48} />
         </Center>
         <Title order={2} ta="center" mb="md">
-          Welcome back
+          {t.auth.welcomeBack}
         </Title>
 
         {error && (
@@ -57,23 +59,23 @@ export default function Login() {
         <form onSubmit={handleSubmit(handleLogin)}>
           <Stack>
             <TextInput
-              label="Email"
-              placeholder="Enter your email"
+              label={t.auth.email}
+              placeholder={t.auth.emailPlaceholder}
               type="email"
               {...register("email")}
               error={errors.email?.message}
             />
             <PasswordInput
-              label="Password"
-              placeholder="Enter your password"
+              label={t.auth.password}
+              placeholder={t.auth.passwordPlaceholder}
               {...register("password")}
               error={errors.password?.message}
             />
             <Button type="submit" loading={isSubmitting} fullWidth>
-              Log in
+              {t.common.login}
             </Button>
             <Text ta="center" size="sm">
-              Don't have an account? <Link to="/signup">Sign up</Link>
+              {t.auth.noAccount} <Link to="/signup">{t.common.signup}</Link>
             </Text>
           </Stack>
         </form>

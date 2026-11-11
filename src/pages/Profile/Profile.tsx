@@ -22,8 +22,9 @@ import {
 import { notifications } from "@mantine/notifications";
 import { getProfile } from "../../api/Profile/api.ts";
 import { getBookmarks, getUserPosts, uploadProfilePhoto } from "../../api/Users/api.ts";
-import { ChangePasswordSchema, type ChangePasswordFormData } from "../../api/Auth/schema.ts";
+import { createChangePasswordSchema, type ChangePasswordFormData } from "../../api/Auth/schema.ts";
 import { useAuth } from "../../context/useAuth.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
 
 // Subtle violet gradient used when the user has no cover photo.
@@ -45,6 +46,7 @@ function Count({ value, label }: { value: number; label: string }) {
 
 export default function Profile() {
   const { changePassword, refreshUser } = useAuth();
+  const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -57,7 +59,7 @@ export default function Profile() {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
     },
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't change your photo", message: "Try again." }),
+      notifications.show({ color: "red", title: t.profile.photoErrorTitle, message: t.common.tryAgain }),
   });
 
   const handlePhotoChange = (file: File | null) => {
@@ -90,17 +92,19 @@ export default function Profile() {
     register,
     reset,
     formState: { errors, isSubmitting },
-  } = useForm<ChangePasswordFormData>({ resolver: zodResolver(ChangePasswordSchema) });
+  } = useForm<ChangePasswordFormData>({ resolver: zodResolver(createChangePasswordSchema(t.validation)) });
 
   const onSubmit = async (values: ChangePasswordFormData) => {
     setError(null);
     setSuccess(null);
     try {
       await changePassword(values);
-      setSuccess("Password changed. You're still logged in.");
+      setSuccess(t.profile.passwordChanged);
       reset();
     } catch (err) {
-      setError(isAxiosError(err) ? (err.response?.data?.message ?? err.message) : "Something went wrong.");
+      setError(
+        isAxiosError(err) ? (err.response?.data?.message ?? err.message) : t.errors.somethingWentWrongPeriod,
+      );
     }
   };
 
@@ -118,9 +122,9 @@ export default function Profile() {
   if (profileQuery.isError || !user) {
     return (
       <Container size={640} px="md">
-        <Alert color="red" title="Couldn't load your profile">
+        <Alert color="red" title={t.profile.loadErrorTitle}>
           <Button mt="sm" onClick={() => profileQuery.refetch()}>
-            Retry
+            {t.common.retry}
           </Button>
         </Alert>
       </Container>
@@ -155,20 +159,22 @@ export default function Profile() {
             <Title order={3} ff="Sora, system-ui, sans-serif" mt="sm">
               {user.name}
             </Title>
-            <Text c="dimmed">@{user.username}</Text>
+            <Text c="dimmed" dir="ltr">
+              @{user.username}
+            </Text>
             {user.email && (
-              <Text size="sm" c="dimmed">
+              <Text size="sm" c="dimmed" dir="ltr">
                 {user.email}
               </Text>
             )}
             <Group gap="xl" mt="md">
-              <Count value={totalPosts} label="Posts" />
-              <Count value={user.followersCount ?? 0} label="Followers" />
-              <Count value={user.followingCount ?? 0} label="Following" />
+              <Count value={totalPosts} label={t.common.posts} />
+              <Count value={user.followersCount ?? 0} label={t.common.followers} />
+              <Count value={user.followingCount ?? 0} label={t.common.followingCount} />
             </Group>
             <FileInput
-              aria-label="Change profile photo"
-              placeholder="Change photo"
+              aria-label={t.profile.changePhotoAria}
+              placeholder={t.profile.changePhotoPlaceholder}
               accept="image/*"
               clearable
               disabled={photoMutation.isPending}
@@ -182,22 +188,22 @@ export default function Profile() {
         <Card padding="lg">
           <Tabs value={tab} onChange={(value) => setTab(value === "saved" ? "saved" : "posts")}>
             <Tabs.List mb="md">
-              <Tabs.Tab value="posts">Posts ({totalPosts})</Tabs.Tab>
-              <Tabs.Tab value="saved">Saved ({totalSaved})</Tabs.Tab>
+              <Tabs.Tab value="posts">{t.profile.postsTab(totalPosts)}</Tabs.Tab>
+              <Tabs.Tab value="saved">{t.profile.savedTab(totalSaved)}</Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="posts">
               {postsQuery.isPending ? (
                 <Skeleton height={160} radius="md" />
               ) : postsQuery.isError ? (
-                <Alert color="red" title="Couldn't load your posts">
+                <Alert color="red" title={t.profile.loadPostsErrorTitle}>
                   <Text size="sm" mb="sm">
-                    Check your connection and try again.
+                    {t.errors.checkConnection}
                   </Text>
-                  <Button onClick={() => postsQuery.refetch()}>Retry</Button>
+                  <Button onClick={() => postsQuery.refetch()}>{t.common.retry}</Button>
                 </Alert>
               ) : posts.length === 0 ? (
-                <Text c="dimmed">You haven&apos;t posted anything yet.</Text>
+                <Text c="dimmed">{t.profile.noPostsYet}</Text>
               ) : (
                 <Stack gap="md">
                   {posts.map((post) => (
@@ -211,13 +217,13 @@ export default function Profile() {
               {bookmarksQuery.isPending ? (
                 <Skeleton height={160} radius="md" />
               ) : bookmarksQuery.isError ? (
-                <Alert color="red" title="Couldn't load your saved posts">
+                <Alert color="red" title={t.profile.loadSavedErrorTitle}>
                   <Button mt="sm" onClick={() => bookmarksQuery.refetch()}>
-                    Retry
+                    {t.common.retry}
                   </Button>
                 </Alert>
               ) : savedPosts.length === 0 ? (
-                <Text c="dimmed">Nothing saved yet — tap the bookmark icon on any post to keep it here.</Text>
+                <Text c="dimmed">{t.profile.nothingSaved}</Text>
               ) : (
                 <Stack gap="md">
                   {savedPosts.map((post) => (
@@ -231,7 +237,7 @@ export default function Profile() {
 
         <Card padding="lg">
           <Title order={4} mb="sm">
-            Change password
+            {t.profile.changePasswordTitle}
           </Title>
           {success && (
             <Alert color="green" mb="sm">
@@ -246,25 +252,25 @@ export default function Profile() {
           <form onSubmit={handleSubmit(onSubmit)}>
             <Stack gap="sm">
               <PasswordInput
-                label="Current password"
-                placeholder="Your current password"
+                label={t.profile.currentPassword}
+                placeholder={t.profile.currentPasswordPlaceholder}
                 error={errors.password?.message}
                 {...register("password")}
               />
               <PasswordInput
-                label="New password"
-                placeholder="At least 8 characters, upper + lower + number + special"
+                label={t.profile.newPassword}
+                placeholder={t.profile.newPasswordPlaceholder}
                 error={errors.newPassword?.message}
                 {...register("newPassword")}
               />
               <PasswordInput
-                label="Confirm new password"
-                placeholder="Repeat the new password"
+                label={t.profile.confirmNewPassword}
+                placeholder={t.profile.confirmNewPasswordPlaceholder}
                 error={errors.rePassword?.message}
                 {...register("rePassword")}
               />
               <Button type="submit" loading={isSubmitting}>
-                Change password
+                {t.profile.changePasswordButton}
               </Button>
             </Stack>
           </form>

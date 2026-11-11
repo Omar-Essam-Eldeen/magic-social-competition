@@ -6,11 +6,13 @@ import { notifications } from "@mantine/notifications";
 import { getPost } from "../../api/Posts/api.ts";
 import { createComment, getComments } from "../../api/Posts/Comments/api.ts";
 import type { CreateCommentReq } from "../../api/Posts/Comments/types.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
 import CommentItem from "../../components/Posts/Comments/CommentItem.tsx";
 
 export default function PostDetails() {
   const { id } = useParams();
+  const { t } = useLanguage();
   const postId = id ?? "";
   const queryClient = useQueryClient();
   const [content, setContent] = useState("");
@@ -35,13 +37,13 @@ export default function PostDetails() {
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
     onError: () =>
-      notifications.show({ color: "red", title: "Couldn't post your comment", message: "Try again." }),
+      notifications.show({ color: "red", title: t.comment.postErrorTitle, message: t.common.tryAgain }),
   });
 
   if (!postId) {
     return (
       <Container size={640} px="md">
-        <Alert color="red" title="Post not found" />
+        <Alert color="red" title={t.post.notFoundTitle} />
       </Container>
     );
   }
@@ -60,9 +62,9 @@ export default function PostDetails() {
   if (postQuery.isError || !postQuery.data?.data) {
     return (
       <Container size={640} px="md">
-        <Alert color="red" title="Couldn't load this post">
+        <Alert color="red" title={t.post.loadErrorTitle}>
           <Button mt="sm" onClick={() => postQuery.refetch()}>
-            Retry
+            {t.common.retry}
           </Button>
         </Alert>
       </Container>
@@ -75,10 +77,10 @@ export default function PostDetails() {
   if (!post || !post.user) {
     return (
       <Container size={640} px="md">
-        <Alert color="red" title="Couldn't read this post">
-          <Text size="sm">The server sent a shape this page doesn't understand yet.</Text>
+        <Alert color="red" title={t.post.readErrorTitle}>
+          <Text size="sm">{t.post.readErrorText}</Text>
           <Button mt="sm" onClick={() => postQuery.refetch()}>
-            Retry
+            {t.common.retry}
           </Button>
         </Alert>
       </Container>
@@ -94,7 +96,7 @@ export default function PostDetails() {
         <PostCard post={post} />
 
         <Text fw={600} size="lg">
-          Comments ({post.commentsCount ?? 0})
+          {t.post.commentsHeading(post.commentsCount ?? 0)}
         </Text>
 
         <form
@@ -105,14 +107,14 @@ export default function PostDetails() {
           }}>
           <Group gap="xs" align="flex-end">
             <TextInput
-              aria-label="Write a comment"
-              placeholder="Write a comment..."
+              aria-label={t.comment.writeAria}
+              placeholder={t.comment.writePlaceholder}
               value={content}
               onChange={(e) => setContent(e.currentTarget.value)}
               style={{ flex: 1 }}
             />
             <Button type="submit" loading={createMutation.isPending} disabled={!content.trim()}>
-              Post
+              {t.common.post}
             </Button>
           </Group>
         </form>
@@ -120,13 +122,13 @@ export default function PostDetails() {
         {commentsQuery.isPending ? (
           <Skeleton height={60} radius="md" />
         ) : commentsQuery.isError ? (
-          <Alert color="red" title="Couldn't load comments">
+          <Alert color="red" title={t.comment.loadErrorTitle}>
             <Button mt="sm" onClick={() => commentsQuery.refetch()}>
-              Retry
+              {t.common.retry}
             </Button>
           </Alert>
         ) : comments.length === 0 ? (
-          <Text c="dimmed">No comments yet — be the first.</Text>
+          <Text c="dimmed">{t.comment.noComments}</Text>
         ) : (
           <Stack gap="sm">
             {comments.map((comment) => (

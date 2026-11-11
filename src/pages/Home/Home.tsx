@@ -4,12 +4,14 @@ import { ActionIcon, Alert, Button, Container, SegmentedControl, Skeleton, Stack
 import { X } from "lucide-react";
 import { getAllPosts, getFeed } from "../../api/Posts/api.ts";
 import type { FeedFilter } from "../../api/Posts/types.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
 import Composer from "../../components/Posts/Composer.tsx";
 
 const PAGE_SIZE = 10;
 
 export default function Home() {
+  const { t } = useLanguage();
   const [filter, setFilter] = useState<FeedFilter>("all");
   const [search, setSearch] = useState("");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
@@ -91,13 +93,13 @@ export default function Home() {
     <Container size={640} px="md">
       <Stack gap="md">
         <TextInput
-          aria-label="Search posts"
-          placeholder="Search posts by text or author..."
+          aria-label={t.search.ariaLabel}
+          placeholder={t.search.placeholder}
           value={search}
           onChange={(e) => setSearch(e.currentTarget.value)}
           rightSection={
             query ? (
-              <ActionIcon variant="subtle" aria-label="Clear search" onClick={() => setSearch("")}>
+              <ActionIcon variant="subtle" aria-label={t.search.clearAria} onClick={() => setSearch("")}>
                 <X size={16} />
               </ActionIcon>
             ) : undefined
@@ -105,9 +107,9 @@ export default function Home() {
         />
         {query && !isPending && !isError && (
           <Text size="sm" c="dimmed">
-            {visiblePosts.length} result{visiblePosts.length === 1 ? "" : "s"} for &lsquo;{search.trim()}&rsquo;{" "}
+            {t.search.results(visiblePosts.length, search.trim())}{" "}
             <Button variant="subtle" size="compact-xs" onClick={() => setSearch("")}>
-              Clear
+              {t.search.clear}
             </Button>
           </Text>
         )}
@@ -116,9 +118,9 @@ export default function Home() {
           value={filter}
           onChange={(value) => setFilter(value as FeedFilter)}
           data={[
-            { label: "All", value: "all" },
-            { label: "Following", value: "following" },
-            { label: "My posts", value: "me" },
+            { label: t.home.filterAll, value: "all" },
+            { label: t.home.filterFollowing, value: "following" },
+            { label: t.home.filterMyPosts, value: "me" },
           ]}
         />
         <Composer />
@@ -129,19 +131,19 @@ export default function Home() {
             <Skeleton height={160} radius="md" />
           </>
         ) : isError ? (
-          <Alert color="red" title="Couldn't load the posts">
+          <Alert color="red" title={t.home.loadErrorTitle}>
             <Text size="sm" mb="sm">
-              Check your connection and try again.
+              {t.home.loadErrorText}
             </Text>
-            <Button onClick={() => refetch()}>Retry</Button>
+            <Button onClick={() => refetch()}>{t.common.retry}</Button>
           </Alert>
         ) : posts.length === 0 ? (
           <Text ta="center" c="dimmed" mt="xl">
-            No posts yet — be the first to share something.
+            {t.home.noPosts}
           </Text>
         ) : visiblePosts.length === 0 ? (
           <Text ta="center" c="dimmed" mt="xl">
-            No posts match &lsquo;{search.trim()}&rsquo;.
+            {t.search.noResults(search.trim())}
           </Text>
         ) : (
           <>
@@ -151,15 +153,15 @@ export default function Home() {
             <div ref={sentinelRef} />
             {isFetchingNextPage && <Skeleton height={160} radius="md" />}
             {isFetchNextPageError && (
-              <Alert color="red" title="Couldn't load more posts">
+              <Alert color="red" title={t.home.loadMoreErrorTitle}>
                 <Button mt="sm" onClick={retryNextPage}>
-                  Load more
+                  {t.home.loadMore}
                 </Button>
               </Alert>
             )}
             {!hasNextPage && (
               <Text ta="center" c="dimmed" size="sm">
-                You&apos;re all caught up.
+                {t.home.caughtUp}
               </Text>
             )}
           </>

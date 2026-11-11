@@ -130,6 +130,10 @@ export const en = {
   },
   post: {
     unavailable: "Post unavailable",
+    notFoundTitle: "Post not found",
+    loadErrorTitle: "Couldn't load this post",
+    readErrorTitle: "Couldn't read this post",
+    readErrorText: "The server sent a shape this page doesn't understand yet.",
     deleteTitle: "Delete this post?",
     deleteText: "This can't be undone.",
     likeErrorTitle: "Couldn't like this post",
@@ -399,6 +403,10 @@ export const ar: Dict = {
   },
   post: {
     unavailable: "المنشور غير متاح",
+    notFoundTitle: "المنشور غير موجود",
+    loadErrorTitle: "تعذّر تحميل هذا المنشور",
+    readErrorTitle: "تعذّرت قراءة هذا المنشور",
+    readErrorText: "أرسل الخادم بيانات لا يفهمها هذا العرض بعد.",
     deleteTitle: "حذف هذا المنشور؟",
     deleteText: "لا يمكن التراجع عن هذا.",
     likeErrorTitle: "تعذّر الإعجاب بهذا المنشور",

@@ -17,6 +17,7 @@ import {
 import { getUserPosts, getUserProfile } from "../../api/Users/api.ts";
 import { getProfile } from "../../api/Profile/api.ts";
 import { useAuth } from "../../context/useAuth.ts";
+import { useLanguage } from "../../context/useLanguage.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
 import FollowButton from "../../components/Users/FollowButton.tsx";
 
@@ -52,6 +53,7 @@ export default function UserProfile() {
   const { id } = useParams();
   const userId = id ?? "";
   const { user: me } = useAuth();
+  const { t } = useLanguage();
 
   const profileQuery = useQuery({
     queryKey: ["userProfile", userId],
@@ -93,7 +95,7 @@ export default function UserProfile() {
   if (!userId) {
     return (
       <Container size={640} px="md">
-        <Alert color="red" title="User not found" />
+        <Alert color="red" title={t.userProfile.notFoundTitle} />
       </Container>
     );
   }
@@ -112,9 +114,9 @@ export default function UserProfile() {
   if (profileQuery.isError) {
     return (
       <Container size={640} px="md">
-        <Alert color="red" title="Couldn't load this profile">
+        <Alert color="red" title={t.userProfile.loadErrorTitle}>
           <Button mt="sm" onClick={() => profileQuery.refetch()}>
-            Retry
+            {t.common.retry}
           </Button>
         </Alert>
       </Container>
@@ -124,10 +126,10 @@ export default function UserProfile() {
   if (!viewed) {
     return (
       <Container size={640} px="md">
-        <Alert color="red" title="User not found">
-          <Text size="sm">This user doesn&apos;t exist or their profile couldn&apos;t be loaded.</Text>
+        <Alert color="red" title={t.userProfile.notFoundTitle}>
+          <Text size="sm">{t.userProfile.notFoundText}</Text>
           <Button mt="sm" onClick={() => profileQuery.refetch()}>
-            Retry
+            {t.common.retry}
           </Button>
         </Alert>
       </Container>
@@ -167,11 +169,13 @@ export default function UserProfile() {
             <Title order={3} ff="Sora, system-ui, sans-serif" mt="sm">
               {viewed.name}
             </Title>
-            <Text c="dimmed">@{viewed.username}</Text>
+            <Text c="dimmed" dir="ltr">
+              @{viewed.username}
+            </Text>
             <Group gap="xl" mt="md">
-              <Count value={totalPosts} label="Posts" />
-              <Count value={followersCount} label="Followers" />
-              <Count value={followingCount} label="Following" />
+              <Count value={totalPosts} label={t.common.posts} />
+              <Count value={followersCount} label={t.common.followers} />
+              <Count value={followingCount} label={t.common.followingCount} />
             </Group>
             <Group mt="md">
               <FollowButton userId={viewed._id} initialFollowing={initialFollowing} />
@@ -182,21 +186,21 @@ export default function UserProfile() {
         <Card padding="lg">
           <Tabs value="posts">
             <Tabs.List mb="md">
-              <Tabs.Tab value="posts">Posts ({totalPosts})</Tabs.Tab>
+              <Tabs.Tab value="posts">{t.userProfile.postsTab(totalPosts)}</Tabs.Tab>
             </Tabs.List>
 
             <Tabs.Panel value="posts">
               {postsQuery.isPending ? (
                 <Skeleton height={160} radius="md" />
               ) : postsQuery.isError ? (
-                <Alert color="red" title="Couldn't load their posts">
+                <Alert color="red" title={t.userProfile.loadPostsErrorTitle}>
                   <Text size="sm" mb="sm">
-                    Check your connection and try again.
+                    {t.errors.checkConnection}
                   </Text>
-                  <Button onClick={() => postsQuery.refetch()}>Retry</Button>
+                  <Button onClick={() => postsQuery.refetch()}>{t.common.retry}</Button>
                 </Alert>
               ) : posts.length === 0 ? (
-                <Text c="dimmed">@{viewed.username} hasn&apos;t posted anything yet.</Text>
+                <Text c="dimmed">{t.userProfile.noPostsYet(viewed.username)}</Text>
               ) : (
                 <Stack gap="md">
                   {posts.map((post) => (
