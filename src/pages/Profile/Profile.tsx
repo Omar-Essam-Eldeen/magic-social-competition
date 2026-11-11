@@ -159,12 +159,12 @@ export default function Profile() {
             <Title order={3} ff="Sora, system-ui, sans-serif" mt="sm">
               {user.name}
             </Title>
-            <Text c="dimmed" dir="ltr">
-              @{user.username}
+            <Text c="dimmed">
+              <span dir="ltr">@{user.username}</span>
             </Text>
             {user.email && (
-              <Text size="sm" c="dimmed" dir="ltr">
-                {user.email}
+              <Text size="sm" c="dimmed">
+                <span dir="ltr">{user.email}</span>
               </Text>
             )}
             <Group gap="xl" mt="md">

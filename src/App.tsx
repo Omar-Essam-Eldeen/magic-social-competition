@@ -21,7 +21,7 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { Bell, Bookmark, Home, Moon, Sun, User } from "lucide-react";
+import { Bell, Bookmark, Home, LogOut, Moon, Sun, User } from "lucide-react";
 import AppRoutes from "./Routes.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import Brand from "./components/Brand.tsx";
@@ -54,7 +54,7 @@ function ProfileMiniCard() {
             {user.name}
           </Text>
           <Text size="xs" c="dimmed">
-            @{user.username}
+            <span dir="ltr">@{user.username}</span>
           </Text>
         </div>
       </Group>
@@ -162,9 +162,16 @@ export default function App() {
             <LanguageToggle />
             {themeToggle}
             {user && (
-              <Button variant="light" size="sm" onClick={handleLogout}>
-                {t.common.logout}
-              </Button>
+              // Icon-only here: this header is the mobile header when logged
+              // in, and the full "تسجيل الخروج" label is too wide for 390px —
+              // it wrapped out of the 60px header and covered page content.
+              // The desktop navbar keeps the full labelled button.
+              <ActionIcon
+                variant="light"
+                aria-label={t.common.logout}
+                onClick={handleLogout}>
+                <LogOut size={20} />
+              </ActionIcon>
             )}
           </Group>
         </Group>

@@ -169,8 +169,8 @@ export default function UserProfile() {
             <Title order={3} ff="Sora, system-ui, sans-serif" mt="sm">
               {viewed.name}
             </Title>
-            <Text c="dimmed" dir="ltr">
-              @{viewed.username}
+            <Text c="dimmed">
+              <span dir="ltr">@{viewed.username}</span>
             </Text>
             <Group gap="xl" mt="md">
               <Count value={totalPosts} label={t.common.posts} />

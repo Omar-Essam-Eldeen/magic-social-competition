@@ -316,3 +316,62 @@ accounts; all test state restored. Results:
   Note: photo upload auto-creates a server-side "updated profile
   picture." post (deleted with the rest).
 - Build green, lint exit 0. Phase 3 COMPLETE.
+
+## Phase 4 — Visual verification (RTL) (2026-11-11)
+
+- Harness: `~/workspace/predeploy/visual-verify/rtl-verify.js` (+ `rtl-recheck.js`
+  for the two re-checks), headless Firefox via Playwright against `vite preview`
+  of the production build; `lang=ar` seeded in localStorage before boot
+  (LanguageProvider reads it on boot). Screenshots in `shots/phase4-rtl/`.
+- Test data (throwaway @testmagic99, deleted afterwards): one Arabic post
+  (`6af4c106fbc846000b37d9a8`) + Arabic comment + Arabic reply + bookmark,
+  created via the live API. Post deleted after verification ("Post Not Found"
+  on re-fetch). The 7 unread notifications on testmagic99 arrived from other
+  users' activity during the run — not created by this verification, left as-is.
+- Screens shot, desktop 1280 + mobile 390, light Arabic: landing, login,
+  signup, feed, post details (comment + nested reply), profile, user profile
+  (testmagic2), bookmarks, notifications. Plus desktop dark + Arabic feed
+  (emulated prefers-color-scheme dark) and toggle-back-to-English on desktop.
+- First run: 67/72 scripted checks PASS. 5 FAILs — 4 were harness artifacts,
+  not app bugs: "بمَ تفكر؟" / "اكتب تعليقًا" are placeholders (never in
+  innerText — confirmed present in the DOM); the EN-toggle check picked the
+  hidden header duplicate instead of the visible navbar toggle. Fixed the
+  harness (placeholder-aware checks, `.last()` toggle) — all pass on re-run.
+- 6 REAL DEFECTS found in the app, all fixed + re-verified (re-run 83/85,
+  then 4/4 on the targeted recheck):
+  - V1 Profile handle/email left-aligned in RTL: `dir="ltr"` was on the whole
+    `<Text>` block, which flips block alignment. Fix (Profile.tsx):
+    dir moved to an inline `<span dir="ltr">` around the content, so the
+    block right-aligns like the name while the handle/email stay LTR.
+  - V2 Same defect on UserProfile.tsx (`@testmagic2` left-aligned). Same fix.
+  - V3 Mini profile card handle had NO bidi isolation: rendered "testmagic99@"
+    (@ trailing) in RTL. Fix (App.tsx): `<span dir="ltr">` around the handle.
+  - V4 UserProfile empty state "@testmagic2 لم ينشر أي شيء بعد." rendered the
+    handle as "testmagic2@" mid-sentence. Fix (dictionary.ts, Arabic only):
+    the handle is wrapped in Unicode bidi isolates (U+2066 LRI / U+2069 PDI).
+  - V5 Mobile header overflow (390px): the full "تسجيل الخروج" button is too
+    wide next to the logo + EN + theme toggles — it wrapped out of the 60px
+    header and covered the search input below. Fix (App.tsx): the header
+    logout is now an icon-only ActionIcon (LogOut, aria-label kept). That
+    header is the mobile header when logged in; the desktop navbar keeps the
+    full labelled button. Verified: header stays 60px, search starts at y=76.
+  - V6 Own-post action row wrapped on 390px: at gap="lg" the row is ~346px vs
+    ~326px card inner width, so the delete icon dangled alone on a second
+    line. Fix (PostCard.tsx): actions Group gap "lg" → "sm". Verified
+    same-card: delete and like buttons on the same y (307).
+- Verified correct (no fix needed): nav on the right / aside on the left in
+  RTL (nav x=1016, aside x=0); reply indented from the right
+  (reply right edge 888 vs comment 938); relative times in Arabic
+  ("منذ دقيقة واحدة", "منذ أقل من دقيقة"); no horizontal overflow on any
+  screen (0px); no leftover English UI strings (brand "Magic Social",
+  usernames, emails and user-generated content stay English by design);
+  toggle back to English flips dir to ltr with full English UI (screenshot
+  desktop-en-after-toggle.png); dark + Arabic feed clean with good contrast.
+  The DOB input's "mm / dd / yyyy" placeholder stays LTR — native browser
+  date control, not an app defect. Suggestions names truncate with "…"
+  at the inline end — normal ellipsis, not clipping.
+- Console errors: only "Image corrupt or truncated" for R2 CDN webp URLs —
+  same known proxy/harness artifact as Phase 2/3 (the URLs render fine in
+  the screenshots; the downloaded webp is valid). Zero page errors in every run.
+- Final state: `npm run build` GREEN (2.59s), `npm run lint` exit 0.
+  Phase 4 visual verification: PASS.

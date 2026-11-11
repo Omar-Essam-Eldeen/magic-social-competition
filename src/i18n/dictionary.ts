@@ -494,7 +494,7 @@ export const ar: Dict = {
     notFoundTitle: "المستخدم غير موجود",
     notFoundText: "هذا المستخدم غير موجود أو تعذّر تحميل ملفه الشخصي.",
     loadPostsErrorTitle: "تعذّر تحميل منشوراته",
-    noPostsYet: (username: string): string => `@${username} لم ينشر أي شيء بعد.`,
+    noPostsYet: (username: string): string => `\u2066@${username}\u2069 لم ينشر أي شيء بعد.`,
   },
   bookmarks: {
     title: "المنشورات المحفوظة",

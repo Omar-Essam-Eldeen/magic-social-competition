@@ -356,7 +356,10 @@ export default function PostCard({ post }: { post: Post }) {
         </Card>
       )}
 
-      <Group gap="lg">
+      {/* Post actions: keep on one line — with the owner edit/delete icons
+          the row is ~346px at gap="lg" and wrapped on 390px screens, leaving
+          the delete icon dangling alone on a second line. gap="sm" fits. */}
+      <Group gap="sm">
         <Group gap={4}>
           <ActionIcon
             variant="subtle"
