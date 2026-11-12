@@ -88,17 +88,6 @@ export default function Profile() {
   const profileQuery = useQuery({ queryKey: ["profile"], queryFn: getProfile });
   const user = profileQuery.data?.data;
 
-  // Change password from the avatar menu lands here as /profile#change-password:
-  // scroll the change-password card into view (below the sticky header)
-  // and focus its first field. Re-runs once the profile has loaded, so
-  // the card exists when the scroll happens.
-  useEffect(() => {
-    if (location.hash !== "#change-password" || !passwordCardRef.current) return;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    passwordCardRef.current.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-    passwordCardRef.current.querySelector("input")?.focus({ preventScroll: true });
-  }, [location.hash, profileQuery.isPending]);
-
   const postsQuery = useQuery({
     queryKey: ["userPosts", user?._id],
     queryFn: () => getUserPosts(user!._id),
@@ -114,6 +103,20 @@ export default function Profile() {
     (sum, post) => sum + (post.likesCount ?? (post.likes ?? []).length),
     0,
   );
+
+  // Change password from the avatar menu lands here as /profile#change-password:
+  // scroll the change-password card into view (below the sticky header)
+  // and focus its first field. It must wait for BOTH the profile and the
+  // posts list above the card: scrolling as soon as the profile loads
+  // scrolls to a position that moves when the posts arrive, leaving the
+  // card far below the viewport (verified flaky before this guard).
+  useEffect(() => {
+    if (location.hash !== "#change-password" || !passwordCardRef.current) return;
+    if (profileQuery.isPending || postsQuery.isPending) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    passwordCardRef.current.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    passwordCardRef.current.querySelector("input")?.focus({ preventScroll: true });
+  }, [location.hash, profileQuery.isPending, postsQuery.isPending]);
   const followersIds =
     idList((user as unknown as { followers?: unknown } | undefined)?.followers) ?? [];
   const followingIds =
