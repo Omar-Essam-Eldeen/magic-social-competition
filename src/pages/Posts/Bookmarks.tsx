@@ -39,7 +39,10 @@ export default function Bookmarks() {
   return (
     <Container size={640} px="md">
       <Stack gap="md">
-        <Title order={3}>{t.bookmarks.title}</Title>
+        {/* Page heading: h1, kept at the h3 visual size. */}
+        <Title order={1} fz="var(--mantine-h3-font-size)" lh="var(--mantine-h3-line-height)">
+          {t.bookmarks.title}
+        </Title>
         {posts.length === 0 ? (
           <Text c="dimmed">{t.bookmarks.empty}</Text>
         ) : (

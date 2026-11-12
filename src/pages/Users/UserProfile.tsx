@@ -192,12 +192,12 @@ export default function UserProfile() {
             <Group gap="sm" mt="md">
               <StatChip value={totalPosts} label={t.common.posts} />
               <UnstyledButton
-                aria-label={t.userProfile.viewFollowersAria}
+                aria-label={`${followersCount} ${t.common.followers} — ${t.userProfile.viewFollowersAria}`}
                 onClick={() => setListOpen("followers")}>
                 <StatChip value={followersCount} label={t.common.followers} />
               </UnstyledButton>
               <UnstyledButton
-                aria-label={t.userProfile.viewFollowingAria}
+                aria-label={`${followingCount} ${t.common.followingCount} — ${t.userProfile.viewFollowingAria}`}
                 onClick={() => setListOpen("following")}>
                 <StatChip value={followingCount} label={t.common.followingCount} />
               </UnstyledButton>
