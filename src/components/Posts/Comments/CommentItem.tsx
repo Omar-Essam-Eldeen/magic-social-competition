@@ -97,6 +97,11 @@ export default function CommentItem({
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["comments", postId] });
     queryClient.invalidateQueries({ queryKey: ["post", postId] });
+    // Replies live under ["replies", postId, parentCommentId] — a prefix
+    // match, so one invalidation refetches every reply list on this post.
+    // Without it, deleting/editing/liking a nested reply leaves the stale
+    // reply on screen (the parent's replies query is never refetched).
+    queryClient.invalidateQueries({ queryKey: ["replies", postId] });
   };
 
   // Replies live on their own endpoint (GET .../comments/:id/replies) — the
