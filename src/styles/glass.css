@@ -418,6 +418,18 @@ body {
   padding-bottom: 28px;
 }
 
+/* Verify fix (Round 4): the rail's children must NEVER shrink. The region
+   is a Mantine Stack (flex column) with a fixed height; when its content
+   is taller, the cards are flex items with flex-shrink:1 — and because
+   Mantine Card sets overflow:hidden, their automatic minimum size is 0,
+   so they squash below content height instead of the region scrolling.
+   At 1280x800 the mini profile card shrank 153px -> 132px and its
+   "View profile" button collapsed to 5px tall (measured). Children keep
+   their natural height; overflow is handled by the region's own scroll. */
+.chrome-rail-scroll > * {
+  flex-shrink: 0;
+}
+
 /* Pinned foot of the left rail (EN/AR pill + theme toggle): always
    fully in view at the panel bottom, separated from the scrolling
    middle by a very soft shadow only — no hard line (Round 4, R2). */
