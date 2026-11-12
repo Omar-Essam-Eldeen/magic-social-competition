@@ -24,6 +24,7 @@ export const en = {
     saved: "Saved",
     notifications: "Notifications",
     profile: "Profile",
+    explore: "Explore",
     aboutTitle: "About Magic Social",
     aboutText:
       "Share posts with photos, follow people you like, and save the posts you love — all in one clean feed.",
@@ -58,6 +59,10 @@ export const en = {
     like: "Like",
     share: "Share",
     viewProfile: "View profile",
+    viewFollowers: "View followers",
+    viewFollowing: "View following",
+    accountMenu: "Account menu",
+    likesReceived: "Likes received",
     deletedUser: "Deleted user",
     photo: "Photo",
     brand: "Magic Social",
@@ -70,6 +75,7 @@ export const en = {
       saved: "Saved — Magic Social",
       notifications: "Notifications — Magic Social",
       post: "Post — Magic Social",
+      explore: "Explore — Magic Social",
     },
     unread: (count: number): string =>
       count === 1 ? "1 unread notification" : `${count} unread notifications`,
@@ -127,6 +133,11 @@ export const en = {
     imagePreviewAlt: "Image preview",
     postButton: "Post",
     createErrorTitle: "Couldn't create your post",
+    postCreatedTitle: "Your post is live",
+    dropHint: "Drop an image here to attach it",
+    dragActive: "Drop the image to attach it",
+    chars: (count: number): string => `${count} characters`,
+    removeImageAria: "Remove image",
   },
   post: {
     unavailable: "Post unavailable",
@@ -152,6 +163,7 @@ export const en = {
     sharesAria: (count: number): string => `${count} shares`,
     bookmarkAria: "Bookmark post",
     removeBookmarkAria: "Remove bookmark",
+    copyLinkAria: "Copy post link",
     // No parentheses around the count: axe strips parentheticals before
     // comparing the accessible name with the visible count text, so
     // "(0 likes)" made the visible "0" disappear from the name.
@@ -216,6 +228,9 @@ export const en = {
     changePhotoAria: "Change profile photo",
     changePhotoPlaceholder: "Change photo",
     photoErrorTitle: "Couldn't change your photo",
+    likesReceived: "Likes received",
+    viewFollowersAria: "View followers",
+    viewFollowingAria: "View following",
   },
   userProfile: {
     postsTab: (count: number): string => `Posts (${count})`,
@@ -224,6 +239,9 @@ export const en = {
     notFoundText: "This user doesn't exist or their profile couldn't be loaded.",
     loadPostsErrorTitle: "Couldn't load their posts",
     noPostsYet: (username: string): string => `@${username} hasn't posted anything yet.`,
+    likesReceived: "Likes received",
+    viewFollowersAria: "View followers",
+    viewFollowingAria: "View following",
   },
   bookmarks: {
     title: "Saved posts",
@@ -259,6 +277,34 @@ export const en = {
     loadErrorTitle: "Couldn't load suggestions",
     loadErrorText: "Try again — the suggestions couldn't be loaded.",
     empty: "No suggestions right now",
+  },
+  explore: {
+    title: "Explore",
+    empty: "No photos yet — posts with images will show up here.",
+    openPostAria: (name: string): string => `Open post by ${name}`,
+  },
+  trending: {
+    title: "Trending",
+    empty: "No hashtags yet — add a #tag to a post to see it here.",
+    tagAria: (tag: string): string => `Show posts with ${tag}`,
+  },
+  followersList: {
+    followersTitle: "Followers",
+    followingTitle: "Following",
+    emptyFollowers: "No followers yet.",
+    emptyFollowing: "Not following anyone yet.",
+    loadErrorTitle: "Couldn't load these people",
+  },
+  toasts: {
+    liked: "Liked",
+    unliked: "Like removed",
+    saved: "Saved to your bookmarks",
+    unsaved: "Removed from saved",
+    followed: (name: string): string => `Following ${name}`,
+    unfollowed: (name: string): string => `Unfollowed ${name}`,
+    linkCopied: "Post link copied",
+    postDeleted: "Post deleted",
+    shared: "Post shared",
   },
   errors: {
     somethingWentWrong: "Something went wrong",
@@ -305,6 +351,7 @@ export const ar: Dict = {
     saved: "المحفوظات",
     notifications: "الإشعارات",
     profile: "الملف الشخصي",
+    explore: "استكشاف",
     aboutTitle: "عن Magic Social",
     aboutText:
       "شارك منشورات مع صور، وتابع الأشخاص الذين يعجبونك، واحفظ المنشورات التي تحبها — كل ذلك في خلاصة واحدة أنيقة.",
@@ -339,6 +386,10 @@ export const ar: Dict = {
     like: "أعجبني",
     share: "مشاركة",
     viewProfile: "عرض الملف الشخصي",
+    viewFollowers: "عرض المتابعين",
+    viewFollowing: "عرض المتابَعين",
+    accountMenu: "قائمة الحساب",
+    likesReceived: "الإعجابات المستلمة",
     deletedUser: "مستخدم محذوف",
     photo: "صورة",
     brand: "Magic Social",
@@ -351,6 +402,7 @@ export const ar: Dict = {
       saved: "المحفوظات — Magic Social",
       notifications: "الإشعارات — Magic Social",
       post: "منشور — Magic Social",
+      explore: "استكشاف — Magic Social",
     },
     unread: (count: number): string =>
       arPlural(count, "إشعار واحد غير مقروء", "إشعاران غير مقروءان", "إشعارات غير مقروءة", "إشعارًا غير مقروء"),
@@ -406,6 +458,11 @@ export const ar: Dict = {
     imagePreviewAlt: "معاينة الصورة",
     postButton: "نشر",
     createErrorTitle: "تعذّر إنشاء منشورك",
+    postCreatedTitle: "تم نشر منشورك",
+    dropHint: "أسقط صورة هنا لإرفاقها",
+    dragActive: "أسقط الصورة لإرفاقها",
+    chars: (count: number): string => `${count} حرفًا`,
+    removeImageAria: "إزالة الصورة",
   },
   post: {
     unavailable: "المنشور غير متاح",
@@ -434,6 +491,7 @@ export const ar: Dict = {
       arPlural(count, "مشاركة واحدة", "مشاركتان", "مشاركات", "مشاركة"),
     bookmarkAria: "حفظ المنشور",
     removeBookmarkAria: "إزالة الحفظ",
+    copyLinkAria: "نسخ رابط المنشور",
     viewLikersAria: (count: number): string =>
       `${count} ${arPlural(count, "إعجاب واحد", "إعجابان", "إعجابات", "إعجابًا")} — عرض من أعجبهم هذا المنشور`,
     likedByTitle: "أعجب به",
@@ -494,6 +552,9 @@ export const ar: Dict = {
     changePhotoAria: "تغيير صورة الملف الشخصي",
     changePhotoPlaceholder: "تغيير الصورة",
     photoErrorTitle: "تعذّر تغيير صورتك",
+    likesReceived: "الإعجابات المستلمة",
+    viewFollowersAria: "عرض المتابعين",
+    viewFollowingAria: "عرض المتابَعين",
   },
   userProfile: {
     postsTab: (count: number): string => `المنشورات (${count})`,
@@ -502,6 +563,9 @@ export const ar: Dict = {
     notFoundText: "هذا المستخدم غير موجود أو تعذّر تحميل ملفه الشخصي.",
     loadPostsErrorTitle: "تعذّر تحميل منشوراته",
     noPostsYet: (username: string): string => `\u2066@${username}\u2069 لم ينشر أي شيء بعد.`,
+    likesReceived: "الإعجابات المستلمة",
+    viewFollowersAria: "عرض المتابعين",
+    viewFollowingAria: "عرض المتابَعين",
   },
   bookmarks: {
     title: "المنشورات المحفوظة",
@@ -537,6 +601,34 @@ export const ar: Dict = {
     loadErrorTitle: "تعذّر تحميل الاقتراحات",
     loadErrorText: "حاول مرة أخرى — تعذّر تحميل الاقتراحات.",
     empty: "لا توجد اقتراحات الآن",
+  },
+  explore: {
+    title: "استكشاف",
+    empty: "لا توجد صور بعد — ستظهر هنا المنشورات التي تحتوي على صور.",
+    openPostAria: (name: string): string => `فتح منشور لـ ${name}`,
+  },
+  trending: {
+    title: "الرائج",
+    empty: "لا توجد وسوم بعد — أضف #وسمًا إلى منشور لتراه هنا.",
+    tagAria: (tag: string): string => `عرض المنشورات التي تحتوي على ${tag}`,
+  },
+  followersList: {
+    followersTitle: "المتابعون",
+    followingTitle: "المتابَعون",
+    emptyFollowers: "لا يوجد متابعون بعد.",
+    emptyFollowing: "لا يتابع أحدًا بعد.",
+    loadErrorTitle: "تعذّر تحميل هؤلاء الأشخاص",
+  },
+  toasts: {
+    liked: "تم الإعجاب",
+    unliked: "تم إلغاء الإعجاب",
+    saved: "تم الحفظ في محفوظاتك",
+    unsaved: "تمت الإزالة من المحفوظات",
+    followed: (name: string): string => `تتابع ${name} الآن`,
+    unfollowed: (name: string): string => `ألغيت متابعة ${name}`,
+    linkCopied: "تم نسخ رابط المنشور",
+    postDeleted: "تم حذف المنشور",
+    shared: "تمت مشاركة المنشور",
   },
   errors: {
     somethingWentWrong: "حدث خطأ ما",
