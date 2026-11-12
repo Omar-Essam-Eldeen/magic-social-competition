@@ -10,7 +10,8 @@ import "@mantine/core/styles.css";
 import "@mantine/notifications/styles.css";
 import App from "./App.tsx";
 import { theme, themeVariables } from "./theme.ts";
-import "./styles/app.css";
+import "./styles/glass.css";
+import { Backdrop } from "./components/Backdrop.tsx";
 import { AuthProvider } from "./context/AuthProvider.tsx";
 import { LanguageProvider } from "./context/LanguageProvider.tsx";
 
@@ -30,8 +31,9 @@ createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <MantineProvider theme={theme} cssVariablesResolver={themeVariables} defaultColorScheme="auto">
+        <Backdrop />
         <LanguageProvider>
-          <Notifications />
+          <Notifications classNames={{ root: "glass-toast" }} />
           <ModalsProvider>
             <BrowserRouter>
               <AuthProvider>
