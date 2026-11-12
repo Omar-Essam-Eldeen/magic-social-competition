@@ -81,7 +81,7 @@ export default function SuggestionsCard() {
               </div>
               {/* The suggestions endpoint returns no following flag, so every
                   button starts as "Follow". */}
-              <FollowButton userId={suggestion._id} initialFollowing={false} />
+              <FollowButton userId={suggestion._id} userName={suggestion.name} initialFollowing={false} />
             </Group>
           ))}
         </Stack>

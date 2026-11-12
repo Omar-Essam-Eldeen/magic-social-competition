@@ -110,7 +110,7 @@ export default function FollowListModal({ userId, kind, ids, opened, onClose }: 
                   <span dir="ltr">@{u.username}</span>
                 </Text>
               </div>
-              {u._id !== me?._id && <FollowButton userId={u._id} initialFollowing={false} />}
+              {u._id !== me?._id && <FollowButton userId={u._id} userName={u.name} initialFollowing={false} />}
             </Group>
           ))}
         </Stack>

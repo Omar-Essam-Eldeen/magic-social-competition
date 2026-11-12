@@ -7,10 +7,12 @@ import { useLanguage } from "../../context/useLanguage.ts";
 
 interface FollowButtonProps {
   userId: string;
+  /** Display name shown in the follow/unfollow toast. */
+  userName: string;
   initialFollowing?: boolean;
 }
 
-export default function FollowButton({ userId, initialFollowing = false }: FollowButtonProps) {
+export default function FollowButton({ userId, userName, initialFollowing = false }: FollowButtonProps) {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [following, setFollowing] = useState(initialFollowing);
@@ -20,6 +22,10 @@ export default function FollowButton({ userId, initialFollowing = false }: Follo
     onSuccess: (response) => {
       // The API tells us the new state — trust it, don't guess from the old one.
       setFollowing(response.data.following);
+      notifications.show({
+        title: response.data.following ? t.toasts.followed(userName) : t.toasts.unfollowed(userName),
+        message: "",
+      });
       void queryClient.invalidateQueries({ queryKey: ["suggestions"] });
       void queryClient.invalidateQueries({ queryKey: ["profile"] });
       void queryClient.invalidateQueries({ queryKey: ["userProfile", userId] });

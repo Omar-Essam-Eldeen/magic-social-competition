@@ -202,7 +202,7 @@ export default function UserProfile() {
               <StatChip value={likesReceived} label={t.userProfile.likesReceived} />
             </Group>
             <Group mt="md">
-              <FollowButton userId={viewed._id} initialFollowing={initialFollowing} />
+              <FollowButton userId={viewed._id} userName={viewed.name} initialFollowing={initialFollowing} />
             </Group>
           </Box>
         </Card>
