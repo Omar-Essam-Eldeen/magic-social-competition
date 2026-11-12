@@ -396,6 +396,37 @@ body {
   padding: 16px;
 }
 
+/* ---- Independent rail scrolling (Round 4, R4) ----
+   Each rail panel is a flex column: the middle region scrolls on its
+   own, independent of the page scroll, with bottom padding inside
+   the scroll area — so the last card (About on the right, At-a-glance
+   on the left) can be scrolled fully into view and never sits half
+   visible / half hidden at the viewport bottom. The center feed
+   keeps the page scroll; the rails stay put. flex:1 + min-height:0
+   constrain the region to the panel's remaining space (without
+   min-height:0 the flex item would grow to its content and the panel
+   would clip it instead of scrolling). overscroll-behavior contains
+   the wheel so a rail at its end doesn't yank the feed. */
+.chrome-rail-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--glass-divider) transparent;
+  padding-bottom: 28px;
+}
+
+/* Pinned foot of the left rail (EN/AR pill + theme toggle): always
+   fully in view at the panel bottom, separated from the scrolling
+   middle by a very soft shadow only — no hard line (Round 4, R2). */
+.chrome-rail-foot {
+  flex: 0 0 auto;
+  padding-top: 12px;
+  box-shadow: 0 -14px 20px -18px rgba(0, 0, 10, 0.5);
+}
+
 /* ---- Header brand wordmark: shrink slightly on very narrow phones so
    logo + name + bell + new-post + avatar all fit (Round 4, R1). ---- */
 @media (max-width: 30em) {

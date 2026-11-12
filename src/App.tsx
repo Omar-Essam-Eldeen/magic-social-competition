@@ -8,7 +8,6 @@ import {
   AppShell,
   Avatar,
   Badge,
-  Box,
   Button,
   Card,
   Group,
@@ -337,7 +336,11 @@ export default function App() {
           background: "transparent",
         }}>
         <div className="chrome-rail-panel">
-          <Stack h="100%" gap="md">
+          {/* Round 4, R4: nav + CTA + at-a-glance scroll inside the rail
+              (independent of the page scroll) with bottom padding, so
+              nothing is ever half-hidden; the EN/AR + theme row is
+              pinned at the panel bottom, always fully in view. */}
+          <Stack className="chrome-rail-scroll" gap="md">
             <Stack gap={4}>
               {NAV_ITEMS.map(({ to, label, Icon }) => {
                 const active = location.pathname === to;
@@ -382,18 +385,17 @@ export default function App() {
                 <WeekAtAGlance />
               </>
             )}
-          <Box style={{ flex: 1 }} />
-          <Group justify="space-between">
+          </Stack>
+          <Group justify="space-between" className="chrome-rail-foot">
             <LanguageToggle />
             {themeToggle}
           </Group>
-          </Stack>
         </div>
       </AppShell.Navbar>
 
       {/* Desktop right aside: mini profile + suggestions + about. Hidden on mobile/tablet.
-          Same full-height rail + inset glass panel as the navbar (Round 4, R3);
-          the inner scroll that makes the bottom cards reachable lands in R4. */}
+          Same full-height rail + inset glass panel as the navbar (Round 4, R3),
+          with its own internal scroll so the bottom cards stay reachable (Round 4, R4). */}
       <AppShell.Aside
         className="chrome-rail"
         style={{
@@ -402,7 +404,11 @@ export default function App() {
           background: "transparent",
         }}>
         <div className="chrome-rail-panel">
-          <Stack gap="md">
+          {/* Round 4, R4: the whole aside scrolls inside the rail
+              (independent of the page scroll) with bottom padding
+              inside the scroll area, so the last card (About) can be
+              scrolled fully into view, never half-hidden. */}
+          <Stack className="chrome-rail-scroll" gap="md">
             <ProfileMiniCard />
             {user && <SuggestionsCard />}
             {user && <TrendingCard />}
