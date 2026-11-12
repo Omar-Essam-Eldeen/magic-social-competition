@@ -1,13 +1,17 @@
 # Magic Social — Competition Upgrade: Handoff
 
 **What this is:** the competition upgrade of your deployed Mantine app.
-React 19 + Vite + TypeScript + Mantine 9. **Round 1 is already live** at
-https://magic-social-competition-5fq473ges-omar-essam-eldeen.vercel.app
-(repo: `Omar-Essam-Eldeen/magic-social-competition`, deployed 2026-11-12).
-This folder is the **Round 2** upgrade on top of it — cinematic glass
-design is back, plus Explore, trending hashtags, followers/following
-lists, a better composer, profile stats, and more. Push this folder's
-`main` to the repo and Vercel auto-deploys it to the same live link.
+React 19 + Vite + TypeScript + Mantine 9. **Live** at the stable
+production address **https://magic-social-competition.vercel.app**
+(repo: `Omar-Essam-Eldeen/magic-social-competition`, Vercel project
+`magic-social-competition`, deployed 2026-11-12). Do NOT use the
+first-deploy URL with the `5fq473ges` hash — that is a pinned
+per-deployment snapshot and never updates; the address above is the
+one that always serves the latest build. Deployment Protection is OFF.
+This folder is the **Round 3** upgrade on top of Round 2 — a proper
+sticky glass top navbar, a filled sidebar, a back-to-top button, and
+the bottom-cards radius/padding fix. Push this folder's `main` to the
+repo and Vercel auto-deploys it to the same live link.
 
 ## What changed
 
@@ -75,6 +79,46 @@ them), and deleting/editing/liking a nested reply left the stale reply on
 screen (the replies query was never invalidated). Both fixed and
 re-verified — see `STAGELOG.md`.
 
+## Round 3 — App chrome: top navbar, filled sidebar, bottom-cards fix (2026-11-12)
+
+You said the left sidebar had a big pointless empty space and the cards
+at the bottom were cut off at the viewport and too sharp. Round 3 builds
+on Round 2 (glass design kept):
+
+- **N1 Sticky glass top navbar** (desktop + mobile): compact brand mark,
+  center search synced with the feed via the `?q=` URL param (typing
+  from any page jumps to the feed with the query applied), notifications
+  bell with the unread badge → `/notifications`, "New post" button
+  opening the full composer (drag-drop image + preview, char counter)
+  as a modal, and the avatar dropdown menu: View profile / Change
+  password / Log out. Keyboard-operable, closes on Escape/outside
+  click, RTL-mirrored, reduced-motion safe.
+- **N2 Sidebar filled:** gradient "Post" CTA under the nav items (same
+  modal) + an "At a glance" glass card with real numbers only — posts,
+  likes received, following. No dead space left.
+- **N3 Back to top:** floating glass pill on all pages, appears after
+  400px of scrolling, smooth scroll (instant under reduced motion),
+  clears the mobile tab bar.
+- **N4 Avatar menu consolidation:** the dropdown lives only in the top
+  navbar now (Round 2 had it in the sidebar bottom); the sidebar bottom
+  keeps just the EN/AR pill + theme toggle. On mobile the menu also
+  carries the EN/AR pill + theme toggle, since phones have no sidebar.
+- **N5 Bottom-cards fix:** 96px bottom padding on mobile / 56px on
+  desktop, 28px sidebar bottom padding, and every card on the 22px
+  glass radius token — including the change-password card, Trending /
+  About cards, post cards and Explore tiles. No sharp or clipped
+  corners anywhere, light + dark, desktop + mobile.
+- **N6 Change password from the menu:** the avatar menu item goes to
+  `/profile#change-password`, scrolls the card into view and focuses
+  its first input. The existing form logic is untouched.
+
+Two real bugs found in Round 3 verification and fixed: the create-post
+modal's test hook sat on Mantine's zero-height Modal root (moved to the
+visible inner wrapper), and the change-password deep-link scroll fired
+before the posts list above it rendered, pushing the card off-viewport
+(it now waits for profile AND posts to settle). Both fixed and
+re-verified — see `STAGELOG.md`.
+
 ## What was tested — Round 2 (all 2026-11-12, throwaway accounts only)
 
 | Check | Result |
@@ -89,23 +133,41 @@ All probe posts, comments, replies, follows and bookmarks created during
 testing were deleted/undone afterwards; testmagic3's password was changed
 and changed back to `Test5678!`.
 
-## How to deploy Round 2
+## What was tested — Round 3 (all 2026-11-12, throwaway accounts only)
+
+| Check | Result |
+|---|---|
+| Functional pass — walk-the-8 + full regression + all Round 3 chrome (bell badge == API unread count, header search from another page, new-post modal from navbar AND sidebar CTA with image post, back-to-top appear/hide/scroll, avatar menu incl. change-password scroll+focus and logout→login, At-a-glance numbers, keyboard, reduced motion) | **96/96 PASS** |
+| Visual + axe shots (Home, Explore, PostDetails, Profile, Bookmarks, Notifications, Login, Signup, Landing, Home RTL — light + dark, desktop + mobile, incl. fully-scrolled-to-bottom views) | **27/27 PASS, axe 0 violations** |
+| Keyboard focus ring while tabbing | **12/12 stops visible** |
+| Reduced motion (orbs static, no card tilt, back-to-top instant) | **PASS** |
+| `npm run build` + `npm run lint` | **Green / clean** |
+
+All probe posts, comments, replies, follows and bookmarks created during
+testing were deleted/undone afterwards; testmagic99 is back to its
+pre–Round 3 post count and testmagic3's password was changed and changed
+back to `Test5678!`.
+
+## How to deploy Round 3
 
 The repo and Vercel project already exist (created for Round 1). Deploying
-Round 2 is just a push — Vercel auto-deploys `main`:
+Round 3 is just a push — Vercel auto-deploys `main` to the stable
+production address **https://magic-social-competition.vercel.app**:
 
 ```bash
 npm install
 npm run build        # must be green
 git add -A
-git commit -m "Round 2: cinematic glass + explore, trending, follow lists"
+git commit -m "Round 3: top navbar + filled sidebar + bottom-cards fix"
 git push origin main
 ```
 
 Wait a minute for Vercel to build, then open the live link and check the
-glass feed loads. If the link ever shows a Vercel login wall instead of
-the site, Deployment Protection turned itself back on: Vercel project
-Settings → Deployment Protection → OFF.
+new navbar loads. Verify anonymously: root 200 (not a redirect to a
+Vercel login page), new bundle hash, title "Magic Social", `/login` 200,
+`manifest.webmanifest` 200, service worker 200. If the link ever shows a
+Vercel login wall instead of the site, Deployment Protection turned
+itself back on: Vercel project Settings → Deployment Protection → OFF.
 
 (Deploying from scratch instead? Create a NEW empty repo, push this folder
 to it, then import it as a NEW Vercel project with the Vite preset and no
@@ -118,7 +180,9 @@ After deploy, run the walk-the-8 once on your link
 ## Still open
 
 - **Competition name / deadline / judging criteria — unknown.** Asked
-  Nov 11, no reply yet. Needed before you submit.
+  Nov 11, no reply yet. Only known: share the project on LinkedIn and
+  mention the organizers, weeks left, organizer LinkedIn handle not
+  given yet. Needed before you submit.
 - `@testmagic99` has 7 unread notifications from other users — pre-existing,
   not from our testing, left as-is.
 - Throwaway avatars are the uploaded favicon (no un-upload endpoint exists) —

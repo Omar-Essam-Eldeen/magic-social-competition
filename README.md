@@ -2,7 +2,7 @@
 
 A social media app — share posts with photos, follow people you like, and save the posts you love. Built with React + TypeScript for my Route Academy assignment, then upgraded for competition.
 
-**🌐 Live demo:** (add your link here after deploying — see DEPLOY-ANYWHERE.md)
+**🌐 Live demo:** https://magic-social-competition.vercel.app
 
 ## Screenshots
 
@@ -66,7 +66,15 @@ A social media app — share posts with photos, follow people you like, and save
 - **Dark / light mode** — one tap, remembered across visits
 - **Full Arabic / RTL** — English ↔ Arabic toggle, whole layout flips right-to-left
 - **PWA** — installable on phone and desktop, works like a real app
-- **Landing page** — a clean welcome page for logged-out visitors
+- **Landing page** — cinematic glass showcase for logged-out visitors
+- **Explore page** — photo grid of image posts
+- **Trending hashtags** — top tags from loaded posts, click to search
+- **Followers / Following lists** — click the counts on any profile
+- **Profile stats** — likes received, posts, followers, following
+- **Cinematic glass design** — glass cards, gradient-mesh backdrop with drifting orbs, Sora headings, light + dark
+- **Top navbar** — sticky glass bar with search, notifications bell with unread badge, New post button, and an avatar menu (View profile / Change password / Log out)
+- **Back to top** — floating glass button that appears as you scroll
+- **Create anywhere** — the composer opens as a modal from the navbar or the sidebar, from any page
 
 ## Tech stack
 
@@ -106,11 +114,11 @@ The app signs in with email + password and keeps the auth token in `localStorage
 ```
 src/
 ├── api/            # one folder per feature: Auth, Posts (+ Comments), Profile, Users, Notifications
-├── pages/          # Landing, Auth, Home, Posts, Profile, Users, Notifications
-├── components/     # PostCard, Composer, LikersModal, SuggestionsCard, FollowButton, …
+├── pages/          # Landing, Auth, Home, Explore, Posts, Profile, Users, Notifications
+├── components/     # PostCard, Composer, CreatePostModal, AccountMenu, BackToTop, LikersModal, SuggestionsCard, FollowButton, TrendingCard, …
 ├── context/        # Auth + Language providers
 ├── i18n/           # English/Arabic dictionary
-├── theme.ts        # Mantine theme (light/dark, clean modern style)
+├── theme.ts        # Mantine theme (light/dark, cinematic glass style)
 └── types.ts        # shared types
 ```
 

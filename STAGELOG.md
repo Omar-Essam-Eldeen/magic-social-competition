@@ -774,3 +774,130 @@ and Vercel auto-deploys). Glass theme spec is again the visual target
   - Fresh throwaway accounts `r2vwdmxrfj`, `r2vwdn1s3t`, … created by the
     verification runs remain on the API (no delete-account endpoint) —
     harmless, same as Round 1's `p6v…` accounts.
+
+---
+
+## Round 3 — App chrome: top navbar, filled sidebar, bottom-cards fix (2026-11-12)
+
+User feedback (~17:49): the left sidebar had a big pointless empty
+space — build a proper top navbar or fill it usefully (back-to-top,
+logout from the navbar, notifications indicator, change password,
+profile icon with dropdown menu) — and the cards at the bottom were
+cut off at the viewport and too sharp (need radius). Creative freedom
+given. Decision: build the proper top navbar + fill the sidebar +
+fix the bottom cards.
+
+### Implementation (6 commits on top of `c1bd6d3`)
+
+- `420bcea` — create-post modal + back-to-top button (chrome strings,
+  Composer `onCreated` prop so the modal closes on a successful post).
+- `ef7d5a0` — sticky glass top navbar + sidebar Post CTA and
+  At-a-glance card + avatar menu consolidation.
+- `b053efd` — change password from the avatar menu scrolls to and
+  focuses the profile form.
+- `c50ae82` — bottom-cards fix: generous bottom padding, all cards on
+  the 22px glass radius.
+- `a17861d` (verify fix) — create-post-modal testid on the visible
+  inner wrapper (Mantine Modal root is a zero-height placeholder).
+- `8412dbc` (verify fix) — change-password deep-link scroll waits for
+  profile AND posts to load (the posts list above the card used to
+  render after the scroll and push the card off-viewport).
+
+### What changed
+
+- **N1 Top navbar:** sticky glass bar, always visible when logged in.
+  Compact brand mark; center search (desktop) driven by the `?q=` URL
+  param Home already reads, so header and feed search stay in sync
+  and typing from any page jumps to the feed; notifications bell with
+  the 60s-polled unread badge → `/notifications`; "New post" button →
+  create-post modal with the full Composer; avatar dropdown (View
+  profile / Change password / Log out). Logged-out header is just the
+  mark + EN/AR pill + theme toggle.
+- **N2 Sidebar filled:** gradient Post CTA under the nav items (same
+  modal) + "At a glance" glass card — posts count, likes received,
+  following, all real numbers from existing queries. (Titled "At a
+  glance", not "Your week": the numbers are lifetime totals, not
+  week-scoped.)
+- **N3 Back to top:** floating glass pill, appears after 400px scroll,
+  76px up on mobile to clear the tab bar, 24px on desktop, smooth
+  scroll (instant under reduced motion), real button with text label.
+- **N4 Avatar menu consolidation:** menu now renders only in the top
+  navbar; sidebar bottom keeps EN/AR pill + theme toggle with 28px
+  bottom padding. The menu gained an EN/AR pill + theme toggle row at
+  its foot — on mobile there is no sidebar, so that is the only place
+  a phone user can reach them.
+- **N5 Bottom-cards fix:** `.app-main-pad` on `AppShell.Main` (96px
+  mobile / 56px desktop bottom padding), navbar/aside bottom padding
+  28px. Radius audit: all Cards already default to the glass token
+  `lg` = 22px; fixed the only exceptions — nested PostCard cards
+  (`md`→`lg`), Login/Signup Paper, Explore tiles/skeletons and the
+  `.post-img` wrapper (17→22). Remaining `radius="md"` uses are
+  standalone images inside clipped wrappers, not cards.
+- **N6 Change password from the menu:** → `/profile#change-password`;
+  Profile scrolls the card into view (`scrollMarginTop: 76` so the
+  sticky header doesn't cover it) and focuses the first password
+  input, re-running once the profile loads. Existing form logic
+  untouched.
+
+### Verification (2026-11-12, throwaway accounts only)
+
+- `npm run build` GREEN, `npm run lint` exit 0 (after every stage
+  and after each fix).
+- Functional: **96/96 PASS** (final run) — walk-the-8 + full
+  regression + all Round 3 chrome: bell badge == API unread count
+  (1→2 after a follow, 0 after mark-all-read), header search from
+  Explore → `/?q=…` with both inputs in sync, modal posting from
+  navbar AND sidebar CTA (image + drag-drop, posts went live, then
+  deleted), back-to-top appear/hide/scroll, avatar menu (profile /
+  change-password scroll+focus / logout → log back in), At-a-glance
+  numbers == profile stats, single avatar menu in navbar only, Main
+  padding 56px desktop / 96px mobile, keyboard focus ring 12/12
+  stops, reduced motion PASS.
+- Shots + axe: **27/27 PASS, axe 0 violations** — Home, Explore,
+  PostDetails, Profile, Bookmarks, Notifications, Login, Signup,
+  Landing, Home RTL; light + dark, desktop + mobile. Bottom-of-page
+  shots for Profile/Notifications/Saved (+ dark + mobile) show
+  rounded 22px cards with breathing room. (Home's feed is
+  infinite-scroll, so its "bottom" shots are mid-list by necessity;
+  N5 for Home rests on the computed padding checks, which pass.)
+- Two defects found in verification and fixed (see commits above):
+  modal testid placement, change-password deep-link scroll timing.
+- Investigated and cleared: the avatar menu looked invisible in early
+  screenshots — headless-Firefox transition artifact (150ms opacity
+  transition takes ~2–3s wall time to paint on this VM; on a real
+  browser it is 150ms). 404s in logs are post-delete refetches, same
+  pattern as Round 2. One Cairo Google-Fonts console error is the
+  sandbox proxy, not the app.
+- Cleanup verified via API: all probe posts deleted (0 "Round 3"
+  hits); the 6 auto-created "updated profile picture." posts from the
+  avatar-upload checks deleted — testmagic99 back to 14 posts, its
+  pre–Round 3 count; 0 unread; follows undone; testmagic3 password
+  round-tripped to `Test5678!`. The one remaining comment on t99's
+  posts is from another user (`verso`, "test") — pre-existing, left
+  alone. User's real account never touched.
+
+### Delivery (2026-11-12)
+
+- Final state: `npm run build` GREEN, `npm run lint` exit 0.
+- Commits on `main` (6 ahead of `origin/main` before push):
+  `420bcea`, `ef7d5a0`, `b053efd`, `c50ae82`, `a17861d`, `8412dbc`,
+  plus this docs commit.
+- Deploy: `git push origin main` → Vercel auto-deploys to the stable
+  production address https://magic-social-competition.vercel.app.
+  Verify anonymously afterwards (root 200, new bundle hash, title
+  "Magic Social", `/login` 200, `manifest.webmanifest` 200, service
+  worker 200; Deployment Protection must stay OFF). NEVER check or
+  share the `5fq473ges` snapshot URL — it never updates.
+- Open items as they now stand:
+  - Competition name / deadline / judging criteria — unknown (only
+    known: share on LinkedIn + mention the organizers, weeks left,
+    organizer handle not given).
+  - His two posts "wefwe" / "test.." are still on the live feed — only
+    he can delete them (his account); flagged, not touched.
+  - @testmagic99 has 7 unread notifications from other users —
+    pre-existing, left as-is.
+  - Throwaway avatars are the uploaded favicon (no un-upload endpoint)
+    — harmless, throwaway accounts only.
+  - Fresh throwaway accounts `r3v*` created by the verification runs
+    remain on the API (no delete-account endpoint) — harmless, same as
+    Round 2 practice.
