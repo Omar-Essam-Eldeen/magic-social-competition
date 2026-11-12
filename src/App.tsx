@@ -324,80 +324,98 @@ export default function App() {
         </Group>
       </AppShell.Header>
 
-      {/* Desktop left navbar: nav items first (Round 4, R1 — the brand
-          block that used to sit on top is gone; the brand lives in the
-          top navbar only), then Post CTA + at-a-glance card filling the
-          old dead space, then only the EN/AR pill + theme toggle at the
-          bottom — the avatar menu moved to the top navbar. */}
-      <AppShell.Navbar p="md" className="glass-bar" style={{ paddingBottom: 28 }}>
-        <Stack h="100%" gap="md">
-          <Stack gap={4}>
-            {NAV_ITEMS.map(({ to, label, Icon }) => {
-              const active = location.pathname === to;
-              return (
-                <NavLink
-                  key={to}
-                  label={label}
-                  leftSection={<Icon size={18} />}
-                  rightSection={
-                    to === "/notifications" && unreadCount > 0 ? (
-                      <Badge size="sm" color="red" circle aria-label={t.common.unread(unreadCount)}>
-                        {unreadLabel}
-                      </Badge>
-                    ) : undefined
-                  }
-                  active={active}
-                  style={
-                    active
-                      ? {
-                          background: "var(--accent-grad)",
-                          color: "#fff",
-                          borderRadius: 14,
-                          boxShadow: "0 10px 22px -8px rgba(99,102,241,0.8)",
-                        }
-                      : undefined
-                  }
-                  onClick={() => navigate(to)}
-                />
-              );
-            })}
-          </Stack>
-          {user && (
-            <>
-              <Button
-                variant="gradient"
-                fullWidth
-                leftSection={<Plus size={18} />}
-                aria-label={t.chrome.newPostAria}
-                onClick={() => setCreateOpen(true)}>
-                {t.chrome.newPost}
-              </Button>
-              <WeekAtAGlance />
-            </>
-          )}
+      {/* Desktop left navbar (Round 4, R3): the rail is a transparent
+          full-height column — height runs from below the header to the
+          viewport bottom (Mantine's default subtracts the 60px mobile
+          tab bar even on desktop, where it is hidden). The glass lives
+          on the inner panel, inset 12px so its 22px corners show. */}
+      <AppShell.Navbar
+        className="chrome-rail"
+        style={{
+          height: "calc(100dvh - var(--app-shell-header-offset, 3.75rem))",
+          padding: 0,
+          background: "transparent",
+        }}>
+        <div className="chrome-rail-panel">
+          <Stack h="100%" gap="md">
+            <Stack gap={4}>
+              {NAV_ITEMS.map(({ to, label, Icon }) => {
+                const active = location.pathname === to;
+                return (
+                  <NavLink
+                    key={to}
+                    label={label}
+                    leftSection={<Icon size={18} />}
+                    rightSection={
+                      to === "/notifications" && unreadCount > 0 ? (
+                        <Badge size="sm" color="red" circle aria-label={t.common.unread(unreadCount)}>
+                          {unreadLabel}
+                        </Badge>
+                      ) : undefined
+                    }
+                    active={active}
+                    style={
+                      active
+                        ? {
+                            background: "var(--accent-grad)",
+                            color: "#fff",
+                            borderRadius: 14,
+                            boxShadow: "0 10px 22px -8px rgba(99,102,241,0.8)",
+                          }
+                        : undefined
+                    }
+                    onClick={() => navigate(to)}
+                  />
+                );
+              })}
+            </Stack>
+            {user && (
+              <>
+                <Button
+                  variant="gradient"
+                  fullWidth
+                  leftSection={<Plus size={18} />}
+                  aria-label={t.chrome.newPostAria}
+                  onClick={() => setCreateOpen(true)}>
+                  {t.chrome.newPost}
+                </Button>
+                <WeekAtAGlance />
+              </>
+            )}
           <Box style={{ flex: 1 }} />
           <Group justify="space-between">
             <LanguageToggle />
             {themeToggle}
           </Group>
-        </Stack>
+          </Stack>
+        </div>
       </AppShell.Navbar>
 
-      {/* Desktop right aside: mini profile + suggestions + about. Hidden on mobile/tablet. */}
-      <AppShell.Aside p="md" className="glass-bar" style={{ paddingBottom: 28 }}>
-        <Stack gap="md">
-          <ProfileMiniCard />
-          {user && <SuggestionsCard />}
-          {user && <TrendingCard />}
-          <Card padding="md">
-            <Title order={4} mb="xs">
-              {t.nav.aboutTitle}
-            </Title>
-            <Text size="sm" c="dimmed">
-              {t.nav.aboutText}
-            </Text>
-          </Card>
-        </Stack>
+      {/* Desktop right aside: mini profile + suggestions + about. Hidden on mobile/tablet.
+          Same full-height rail + inset glass panel as the navbar (Round 4, R3);
+          the inner scroll that makes the bottom cards reachable lands in R4. */}
+      <AppShell.Aside
+        className="chrome-rail"
+        style={{
+          height: "calc(100dvh - var(--app-shell-header-offset, 3.75rem))",
+          padding: 0,
+          background: "transparent",
+        }}>
+        <div className="chrome-rail-panel">
+          <Stack gap="md">
+            <ProfileMiniCard />
+            {user && <SuggestionsCard />}
+            {user && <TrendingCard />}
+            <Card padding="md">
+              <Title order={4} mb="xs">
+                {t.nav.aboutTitle}
+              </Title>
+              <Text size="sm" c="dimmed">
+                {t.nav.aboutText}
+              </Text>
+            </Card>
+          </Stack>
+        </div>
       </AppShell.Aside>
 
       <AppShell.Main className="app-main-pad">

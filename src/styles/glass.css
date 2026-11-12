@@ -366,6 +366,36 @@ body {
   }
 }
 
+/* ---- Full-height glass side rails (Round 4, R3) ----
+   Mantine's AppShell rails are fixed columns flush to the viewport
+   edges with square corners, and on desktop their height still
+   subtracts the 60px mobile tab bar (the footer is only visually
+   hidden above sm), so they stopped 60px short of the viewport
+   bottom. The rail itself becomes a transparent structural column —
+   its height is overridden inline in App.tsx (Mantine sets height in
+   its own stylesheet, so only an inline value wins without a
+   specificity fight) to run from below the header to the viewport
+   bottom. The visible glass lives on the inner panel, inset 12px on
+   every side, so all four 22px corners are visible instead of
+   clipped by the viewport edge. The panel's 1px border is card
+   definition (same as .glass-card), not a layout-slicing line. */
+.chrome-rail-panel {
+  height: calc(100% - 24px);
+  margin: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  background: var(--glass-bar);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
+  backdrop-filter: blur(22px) saturate(170%);
+  border: 1px solid var(--glass-border);
+  border-radius: 22px;
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    0 12px 32px -18px rgba(0, 0, 10, 0.5);
+  padding: 16px;
+}
+
 /* ---- Header brand wordmark: shrink slightly on very narrow phones so
    logo + name + bell + new-post + avatar all fit (Round 4, R1). ---- */
 @media (max-width: 30em) {
