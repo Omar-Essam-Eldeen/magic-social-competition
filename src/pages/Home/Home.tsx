@@ -31,6 +31,14 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [qParam]);
 
+  // Typing also writes the `?q=` param (replace, no history spam): the
+  // top-navbar search reads that same param, so the two inputs never
+  // disagree about what is being searched.
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setSearchParams(value.trim() ? { q: value } : {}, { replace: true });
+  };
+
   // Clearing the search clears the param too, in both clear spots.
   const clearSearch = () => {
     setSearch("");
@@ -121,7 +129,7 @@ export default function Home() {
           aria-label={t.search.ariaLabel}
           placeholder={t.search.placeholder}
           value={search}
-          onChange={(e) => setSearch(e.currentTarget.value)}
+          onChange={(e) => handleSearchChange(e.currentTarget.value)}
           rightSection={
             query ? (
               <ActionIcon variant="subtle" aria-label={t.search.clearAria} onClick={clearSearch}>

@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "./context/useAuth";
 import { useLanguage } from "./context/useLanguage";
@@ -16,19 +16,23 @@ import {
   NavLink,
   Stack,
   Text,
+  TextInput,
   Title,
   UnstyledButton,
   useMantineColorScheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { Bell, Bookmark, Compass, Home, Moon, Sun, User } from "lucide-react";
+import { Bell, Bookmark, Compass, Home, Moon, Plus, Search, Sun, User, X } from "lucide-react";
 import AppRoutes from "./Routes.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import AccountMenu from "./components/AccountMenu.tsx";
-import Brand from "./components/Brand.tsx";
+import BackToTop from "./components/BackToTop.tsx";
+import Brand, { LogoMark } from "./components/Brand.tsx";
 import LanguageToggle from "./components/LanguageToggle.tsx";
+import CreatePostModal from "./components/Posts/CreatePostModal.tsx";
 import TrendingCard from "./components/TrendingCard.tsx";
 import SuggestionsCard from "./components/Users/SuggestionsCard.tsx";
+import { getProfile } from "./api/Profile/api.ts";
 import { getUserPosts } from "./api/Users/api.ts";
 import { getUnreadCount } from "./api/Notifications/api.ts";
 
@@ -77,6 +81,98 @@ function ProfileMiniCard() {
   );
 }
 
+/**
+ * Sidebar "at a glance" card: posts count, likes received, following —
+ * real numbers from the same queries the profile page already uses, no
+ * invented data. Likes received counts only the loaded first page of the
+ * user's posts (the API has no totals endpoint), exactly like Profile.
+ */
+function WeekAtAGlance() {
+  const { user } = useAuth();
+  const { t } = useLanguage();
+  const profileQuery = useQuery({ queryKey: ["profile"], queryFn: getProfile, enabled: !!user });
+  const postsQuery = useQuery({
+    queryKey: ["userPosts", user?._id],
+    queryFn: () => getUserPosts(user!._id),
+    enabled: !!user?._id,
+  });
+  if (!user) return null;
+  const totalPosts = postsQuery.data?.meta?.pagination?.total ?? postsQuery.data?.data.posts.length ?? 0;
+  const likesReceived = (postsQuery.data?.data.posts ?? []).reduce(
+    (sum, post) => sum + (post.likesCount ?? (post.likes ?? []).length),
+    0,
+  );
+  const following = profileQuery.data?.data.followingCount ?? 0;
+  const stats = [
+    { label: t.common.posts, value: postsQuery.isPending ? "…" : totalPosts },
+    { label: t.profile.likesReceived, value: postsQuery.isPending ? "…" : likesReceived },
+    { label: t.common.followingCount, value: profileQuery.isPending ? "…" : following },
+  ];
+
+  return (
+    <Card padding="md" aria-label={t.chrome.atAGlance}>
+      <Text size="sm" fw={700} mb="sm">
+        {t.chrome.atAGlance}
+      </Text>
+      <Group gap="xs" grow>
+        {stats.map(({ label, value }) => (
+          <div key={label} style={{ textAlign: "center", minWidth: 0 }}>
+            <Text fw={700} ff="Sora, system-ui, sans-serif">
+              {value}
+            </Text>
+            <Text size="xs" c="dimmed">
+              {label}
+            </Text>
+          </div>
+        ))}
+      </Group>
+    </Card>
+  );
+}
+
+/**
+ * Top-navbar search. Same behavior as the Home feed search: it filters
+ * the loaded posts by text/author. The `?q=` URL param is the shared
+ * state — Home reads it into its own input, so typing here and typing
+ * there stay in sync. Typing from any other page jumps to the feed
+ * (replace, so no history spam per keystroke). On mobile the search
+ * stays on Home only — the navbar input is desktop-only.
+ */
+function HeaderSearch() {
+  const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const value = searchParams.get("q") ?? "";
+
+  const applySearch = (next: string) => {
+    if (location.pathname !== "/") {
+      navigate(next ? `/?q=${encodeURIComponent(next)}` : "/", { replace: true });
+    } else {
+      setSearchParams(next ? { q: next } : {}, { replace: true });
+    }
+  };
+
+  return (
+    <TextInput
+      aria-label={t.search.ariaLabel}
+      placeholder={t.search.placeholder}
+      value={value}
+      onChange={(e) => applySearch(e.currentTarget.value)}
+      leftSection={<Search size={16} />}
+      rightSection={
+        value ? (
+          <ActionIcon variant="subtle" aria-label={t.search.clearAria} onClick={() => applySearch("")}>
+            <X size={16} />
+          </ActionIcon>
+        ) : undefined
+      }
+      style={{ flex: "1 1 auto", maxWidth: 480 }}
+      visibleFrom="sm"
+    />
+  );
+}
+
 export default function App() {
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const dark = colorScheme === "dark";
@@ -95,9 +191,11 @@ export default function App() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const [createOpen, setCreateOpen] = useState(false);
 
   // Unread notification count, polled once a minute — drives the badge
-  // on the Notifications nav item (desktop) and tab (mobile).
+  // on the Notifications nav item (desktop) and tab (mobile), and on the
+  // top-navbar bell.
   const unreadQuery = useQuery({
     queryKey: ["notifications", "unread-count"],
     queryFn: getUnreadCount,
@@ -106,6 +204,8 @@ export default function App() {
   });
   const unreadCount = unreadQuery.data?.data.unreadCount ?? 0;
   const unreadLabel = unreadCount > 99 ? "99+" : unreadCount;
+  const bellLabel =
+    unreadCount > 0 ? `${t.nav.notifications}, ${t.common.unreadShort(unreadCount)}` : t.nav.notifications;
 
   // Per-page document title, so tabs and history entries say where you are.
   // Titles come from the dictionary and live inside the effect so they
@@ -155,25 +255,71 @@ export default function App() {
       aside={{ width: 320, breakpoint: "lg", collapsed: { mobile: true, desktop: !user } }}
       footer={{ height: 60 }}
       padding="md">
-      {/* Top header: logo + theme toggle (+ Logout when logged in).
-          On mobile it is always shown. On desktop it is shown only when
-          logged out — otherwise the navbar carries the logo and toggle,
-          and a logged-out desktop user would have no way to switch themes. */}
-      <AppShell.Header className="glass-bar" hiddenFrom={user ? "sm" : undefined}>
-        <Group h="100%" px="md" justify="space-between">
-          <UnstyledButton aria-label={t.common.goHome} onClick={() => navigate("/")}>
-            <Brand />
+      {/* Sticky glass top navbar (Round 3, N1): compact brand mark, search
+          (desktop), notifications bell with unread badge, "New post"
+          button, avatar menu. Logged out it is just the mark plus the
+          language/theme controls — the sidebar is collapsed then, so the
+          header is the only place those controls live. */}
+      <AppShell.Header className="glass-bar">
+        <Group h="100%" px="md" justify="space-between" gap="sm" wrap="nowrap">
+          <UnstyledButton
+            aria-label={t.common.goHome}
+            onClick={() => navigate("/")}
+            style={{ display: "flex", flexShrink: 0 }}>
+            <LogoMark size={34} />
           </UnstyledButton>
-          <Group gap="xs">
-            <LanguageToggle />
-            {themeToggle}
-            {user && <AccountMenu onLogout={handleLogout} />}
+          {user && <HeaderSearch />}
+          <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
+            {user && (
+              <>
+                <Indicator
+                  label={unreadLabel}
+                  size={16}
+                  color="red"
+                  disabled={unreadCount === 0}
+                  position="top-end">
+                  <ActionIcon
+                    variant="default"
+                    size="lg"
+                    aria-label={bellLabel}
+                    onClick={() => navigate("/notifications")}>
+                    <Bell size={20} />
+                  </ActionIcon>
+                </Indicator>
+                <Button
+                  variant="gradient"
+                  size="sm"
+                  leftSection={<Plus size={16} />}
+                  visibleFrom="sm"
+                  aria-label={t.chrome.newPostAria}
+                  onClick={() => setCreateOpen(true)}>
+                  {t.chrome.newPost}
+                </Button>
+                <ActionIcon
+                  variant="filled"
+                  size="lg"
+                  hiddenFrom="sm"
+                  aria-label={t.chrome.newPostAria}
+                  onClick={() => setCreateOpen(true)}>
+                  <Plus size={20} />
+                </ActionIcon>
+                <AccountMenu onLogout={handleLogout} />
+              </>
+            )}
+            {!user && (
+              <>
+                <LanguageToggle />
+                {themeToggle}
+              </>
+            )}
           </Group>
         </Group>
       </AppShell.Header>
 
-      {/* Desktop left navbar: logo at top, nav, account menu + toggles at the bottom. */}
-      <AppShell.Navbar p="md" className="glass-bar">
+      {/* Desktop left navbar: logo at top, nav, Post CTA + at-a-glance card
+          filling the old dead space, then only the EN/AR pill + theme
+          toggle at the bottom — the avatar menu moved to the top navbar. */}
+      <AppShell.Navbar p="md" className="glass-bar" style={{ paddingBottom: 28 }}>
         <Stack h="100%" gap="md">
           <UnstyledButton aria-label={t.common.goHome} onClick={() => navigate("/")}>
             <Brand />
@@ -209,19 +355,29 @@ export default function App() {
               );
             })}
           </Stack>
+          {user && (
+            <>
+              <Button
+                variant="gradient"
+                fullWidth
+                leftSection={<Plus size={18} />}
+                aria-label={t.chrome.newPostAria}
+                onClick={() => setCreateOpen(true)}>
+                {t.chrome.newPost}
+              </Button>
+              <WeekAtAGlance />
+            </>
+          )}
           <Box style={{ flex: 1 }} />
           <Group justify="space-between">
-            {user && <AccountMenu onLogout={handleLogout} />}
-            <Group gap="xs">
-              <LanguageToggle />
-              {themeToggle}
-            </Group>
+            <LanguageToggle />
+            {themeToggle}
           </Group>
         </Stack>
       </AppShell.Navbar>
 
       {/* Desktop right aside: mini profile + suggestions + about. Hidden on mobile/tablet. */}
-      <AppShell.Aside p="md" className="glass-bar">
+      <AppShell.Aside p="md" className="glass-bar" style={{ paddingBottom: 28 }}>
         <Stack gap="md">
           <ProfileMiniCard />
           {user && <SuggestionsCard />}
@@ -237,7 +393,7 @@ export default function App() {
         </Stack>
       </AppShell.Aside>
 
-      <AppShell.Main>
+      <AppShell.Main className="app-main-pad">
         <ErrorBoundary>
           <AppRoutes />
         </ErrorBoundary>
@@ -272,6 +428,9 @@ export default function App() {
           </Group>
         </AppShell.Footer>
       )}
+
+      <CreatePostModal opened={createOpen} onClose={() => setCreateOpen(false)} />
+      <BackToTop />
     </AppShell>
   );
 }
