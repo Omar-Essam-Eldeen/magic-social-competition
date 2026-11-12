@@ -8,6 +8,7 @@ import Profile from "./pages/Profile/Profile.tsx";
 import Bookmarks from "./pages/Posts/Bookmarks.tsx";
 import Notifications from "./pages/Notifications/Notifications.tsx";
 import UserProfile from "./pages/Users/UserProfile.tsx";
+import Explore from "./pages/Explore/Explore.tsx";
 
 export default function AppRoutes() {
   return (
@@ -59,6 +60,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <Notifications />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/explore"
+        element={
+          <ProtectedRoute>
+            <Explore />
           </ProtectedRoute>
         }
       />

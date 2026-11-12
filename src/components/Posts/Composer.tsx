@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, FileInput, Image, Stack, Textarea } from "@mantine/core";
+import { ActionIcon, Box, Button, Card, FileInput, Image, Stack, Text, Textarea } from "@mantine/core";
+import { X } from "lucide-react";
 import { notifications } from "@mantine/notifications";
 import { createPost } from "../../api/Posts/api.ts";
 import type { CreatePostReq } from "../../api/Posts/types.ts";
@@ -12,6 +13,7 @@ export default function Composer() {
   const [body, setBody] = useState("");
   const [image, setImage] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   const previewRef = useRef<string | null>(null);
 
   // Release the temporary object URL when the composer unmounts.
@@ -55,13 +57,28 @@ export default function Composer() {
       clearImage();
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+      // Mantine 9 requires `message` on NotificationData; an empty string
+      // keeps the toast title-only (the message line is not rendered).
+      notifications.show({ title: t.composer.postCreatedTitle, message: "" });
     },
     onError: () =>
       notifications.show({ color: "red", title: t.composer.createErrorTitle, message: t.common.tryAgain }),
   });
 
   return (
-    <Card padding="lg">
+    <Card
+      padding="lg"
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragActive(true);
+      }}
+      onDragLeave={() => setDragActive(false)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragActive(false);
+        const file = e.dataTransfer.files?.[0];
+        if (file && file.type.startsWith("image/")) handleImageChange(file);
+      }}>
       <form
         onSubmit={(e) => {
           e.preventDefault();
@@ -69,6 +86,16 @@ export default function Composer() {
           createMutation.mutate({ body: body.trim(), image });
         }}>
         <Stack gap="sm">
+          {dragActive && (
+            <Box
+              style={{
+                border: "2px dashed var(--tag-color)",
+                borderRadius: 16,
+                padding: "var(--mantine-spacing-md)",
+              }}>
+              <Text ta="center">{t.composer.dragActive}</Text>
+            </Box>
+          )}
           <Textarea
             aria-label={t.composer.ariaLabel}
             placeholder={t.composer.placeholder}
@@ -77,6 +104,9 @@ export default function Composer() {
             autosize
             minRows={2}
           />
+          <Text size="xs" c="dimmed" ta="end">
+            {t.composer.chars(body.length)}
+          </Text>
           <FileInput
             aria-label={t.composer.addImageAria}
             placeholder={t.composer.addImagePlaceholder}
@@ -85,8 +115,21 @@ export default function Composer() {
             onChange={handleImageChange}
             clearable
           />
+          <Text size="xs" c="dimmed">
+            {t.composer.dropHint}
+          </Text>
           {preview && (
-            <Image src={preview} alt={t.composer.imagePreviewAlt} loading="lazy" radius="md" style={{ aspectRatio: "16 / 9", objectFit: "cover" }} />
+            <Box pos="relative">
+              <Image src={preview} alt={t.composer.imagePreviewAlt} loading="lazy" radius="md" style={{ aspectRatio: "16 / 9", objectFit: "cover" }} />
+              <ActionIcon
+                variant="filled"
+                size="sm"
+                aria-label={t.composer.removeImageAria}
+                onClick={clearImage}
+                style={{ position: "absolute", top: 8, insetInlineEnd: 8 }}>
+                <X size={16} />
+              </ActionIcon>
+            </Box>
           )}
           <Button type="submit" loading={createMutation.isPending} disabled={!body.trim()}>
             {t.composer.postButton}

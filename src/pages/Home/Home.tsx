@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { ActionIcon, Alert, Button, Container, SegmentedControl, Skeleton, Stack, Text, TextInput, VisuallyHidden } from "@mantine/core";
 import { X } from "lucide-react";
@@ -13,8 +14,28 @@ const PAGE_SIZE = 10;
 export default function Home() {
   const { t } = useLanguage();
   const [filter, setFilter] = useState<FeedFilter>("all");
-  const [search, setSearch] = useState("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  // Hashtag search: a trending tag navigates to /?q=%23tag. Typing updates
+  // local state only — the param is never written on every keystroke.
+  const [search, setSearch] = useState(searchParams.get("q") ?? "");
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+
+  // Clicking a trending tag while already on / changes only the param, so
+  // sync the input from it. The param is external state (the URL), not
+  // React state; the write only happens when it differs, so typing is
+  // never clobbered.
+  const qParam = searchParams.get("q") ?? "";
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (qParam !== search) setSearch(qParam);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [qParam]);
+
+  // Clearing the search clears the param too, in both clear spots.
+  const clearSearch = () => {
+    setSearch("");
+    setSearchParams({});
+  };
 
   const {
     data,
@@ -103,7 +124,7 @@ export default function Home() {
           onChange={(e) => setSearch(e.currentTarget.value)}
           rightSection={
             query ? (
-              <ActionIcon variant="subtle" aria-label={t.search.clearAria} onClick={() => setSearch("")}>
+              <ActionIcon variant="subtle" aria-label={t.search.clearAria} onClick={clearSearch}>
                 <X size={16} />
               </ActionIcon>
             ) : undefined
@@ -112,7 +133,7 @@ export default function Home() {
         {query && !isPending && !isError && (
           <Text size="sm" c="dimmed">
             {t.search.results(visiblePosts.length, search.trim())}{" "}
-            <Button variant="subtle" size="compact-xs" onClick={() => setSearch("")}>
+            <Button variant="subtle" size="compact-xs" onClick={clearSearch}>
               {t.search.clear}
             </Button>
           </Text>
