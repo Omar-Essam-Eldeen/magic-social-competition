@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ActionIcon, Avatar, Box, Button, Card, FileInput, Group, Image, Stack, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Avatar, Box, Button, Card, FileInput, Group, Image, Stack, Text, TextInput, UnstyledButton } from "@mantine/core";
 import { modals } from "@mantine/modals";
 import { notifications } from "@mantine/notifications";
 import { formatDistanceToNow } from "date-fns";
@@ -38,6 +39,7 @@ export default function CommentItem({
 }) {
   const { user } = useAuth();
   const { t, lang } = useLanguage();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(comment.content);
@@ -174,13 +176,34 @@ export default function CommentItem({
   return (
     <Card padding="md">
       <Group gap="sm" mb="xs">
-        <Avatar src={creator?.photo} alt={creatorName} radius="xl" size="sm">
-          {creator?.name?.[0]}
-        </Avatar>
+        {creator?._id ? (
+          <UnstyledButton
+            aria-label={t.post.viewProfile(creatorName)}
+            onClick={() => navigate(`/users/${creator._id}`)}
+            style={{ display: "flex" }}>
+            <Avatar src={creator?.photo} alt={creatorName} radius="xl" size="sm">
+              {creator?.name?.[0]}
+            </Avatar>
+          </UnstyledButton>
+        ) : (
+          <Avatar src={creator?.photo} alt={creatorName} radius="xl" size="sm">
+            {creator?.name?.[0]}
+          </Avatar>
+        )}
         <div>
-          <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
-            {creatorName}
-          </Text>
+          {creator?._id ? (
+            <UnstyledButton
+              aria-label={t.post.viewProfile(creatorName)}
+              onClick={() => navigate(`/users/${creator._id}`)}>
+              <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
+                {creatorName}
+              </Text>
+            </UnstyledButton>
+          ) : (
+            <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
+              {creatorName}
+            </Text>
+          )}
           {relativeTime && (
             <Text size="xs" c="dimmed">
               {relativeTime}

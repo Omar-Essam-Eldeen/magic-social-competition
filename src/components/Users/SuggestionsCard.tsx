@@ -1,5 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Alert, Avatar, Button, Card, Group, Skeleton, Stack, Text, Title } from "@mantine/core";
+import { Alert, Avatar, Button, Card, Group, Skeleton, Stack, Text, Title, UnstyledButton } from "@mantine/core";
 import { getSuggestions } from "../../api/Users/api.ts";
 import { useAuth } from "../../context/useAuth.ts";
 import { useLanguage } from "../../context/useLanguage.ts";
@@ -10,6 +11,7 @@ const MAX_SUGGESTIONS = 5;
 export default function SuggestionsCard() {
   const { user } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   // Never fire logged out: Mantine's AppShell.Aside mounts its children even
   // when collapsed, so without this guard the query 401s on /login and the
   // 401 interceptor full-reloads the page in a loop.
@@ -56,13 +58,23 @@ export default function SuggestionsCard() {
         <Stack gap="sm">
           {suggestions.map((suggestion) => (
             <Group key={suggestion._id} gap="sm" wrap="nowrap">
-              <Avatar src={suggestion.photo} alt={suggestion.name} radius="xl" size={36}>
-                {suggestion.name?.[0]}
-              </Avatar>
+              <UnstyledButton
+                aria-label={t.post.viewProfile(suggestion.name)}
+                onClick={() => navigate(`/users/${suggestion._id}`)}
+                style={{ display: "flex" }}>
+                <Avatar src={suggestion.photo} alt={suggestion.name} radius="xl" size={36}>
+                  {suggestion.name?.[0]}
+                </Avatar>
+              </UnstyledButton>
               <div style={{ flex: 1, minWidth: 0 }}>
-                <Text size="sm" fw={600} truncate>
-                  {suggestion.name}
-                </Text>
+                <UnstyledButton
+                  aria-label={t.post.viewProfile(suggestion.name)}
+                  onClick={() => navigate(`/users/${suggestion._id}`)}
+                  style={{ display: "block", width: "100%", textAlign: "start" }}>
+                  <Text size="sm" fw={600} truncate>
+                    {suggestion.name}
+                  </Text>
+                </UnstyledButton>
                 <Text size="xs" c="dimmed" truncate>
                   <span dir="ltr">@{suggestion.username}</span>
                 </Text>

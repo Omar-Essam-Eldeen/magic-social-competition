@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Navigate, useParams } from "react-router-dom";
 import {
@@ -13,25 +14,30 @@ import {
   Tabs,
   Text,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { getUserPosts, getUserProfile } from "../../api/Users/api.ts";
 import { getProfile } from "../../api/Profile/api.ts";
 import { useAuth } from "../../context/useAuth.ts";
 import { useLanguage } from "../../context/useLanguage.ts";
+import useCountUp from "../../hooks/useCountUp.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
 import FollowButton from "../../components/Users/FollowButton.tsx";
+import FollowListModal from "../../components/Users/FollowListModal.tsx";
 
-// Subtle violet gradient used when the user has no cover photo.
+// Cinematic cover gradient (glass spec) used when the user has no cover photo.
 const COVER_FALLBACK =
-  "linear-gradient(135deg, #7c3aed 0%, #6d28d9 45%, #4338ca 100%)";
+  "radial-gradient(600px 220px at 85% 0%, rgba(34,211,238,0.55), transparent 60%), radial-gradient(500px 260px at 8% 110%, rgba(217,70,239,0.5), transparent 60%), linear-gradient(118deg, #6d28d9, #4338ca 48%, #0e7490)";
 
-function Count({ value, label }: { value: number; label: string }) {
+/** Animated stat chip: Sora number over an uppercase muted label. */
+function StatChip({ value, label }: { value: number; label: string }) {
+  const animated = useCountUp(value);
   return (
-    <div>
-      <Text fw={700} ff="Sora, system-ui, sans-serif" aria-label={`${value} ${label}`}>
-        {value}
+    <div className="stat-chip">
+      <Text className="stat-value" aria-label={`${value} ${label}`}>
+        {animated}
       </Text>
-      <Text size="xs" c="dimmed">
+      <Text size="xs" c="dimmed" tt="uppercase">
         {label}
       </Text>
     </div>
@@ -54,6 +60,7 @@ export default function UserProfile() {
   const userId = id ?? "";
   const { user: me } = useAuth();
   const { t } = useLanguage();
+  const [listOpen, setListOpen] = useState<"followers" | "following" | null>(null);
 
   const profileQuery = useQuery({
     queryKey: ["userProfile", userId],
@@ -82,6 +89,9 @@ export default function UserProfile() {
   );
   const viewedFollowers = idList(
     (viewed as unknown as { followers?: unknown } | undefined)?.followers,
+  );
+  const viewedFollowing = idList(
+    (viewed as unknown as { following?: unknown } | undefined)?.following,
   );
   const initialFollowing =
     (me?._id && myFollowing ? myFollowing.includes(userId) : undefined) ??
@@ -144,6 +154,12 @@ export default function UserProfile() {
     viewed.followingCount ??
     idList((viewed as unknown as { following?: unknown } | undefined)?.following)?.length ??
     0;
+  // Likes received counts only the loaded page of posts — the best the
+  // client can see without a dedicated endpoint.
+  const likesReceived = posts.reduce(
+    (sum, post) => sum + (post.likesCount ?? (post.likes ?? []).length),
+    0,
+  );
 
   return (
     <Container size={640} px="md">
@@ -151,37 +167,57 @@ export default function UserProfile() {
         <Card p={0} style={{ overflow: "hidden" }}>
           <Box h={{ base: 150, sm: 196 }} style={coverStyle} />
           <Box px="md" pb="md">
-            <Avatar
-              src={viewed.photo}
-              alt={viewed.name}
-              radius={999}
-              size={104}
-              mt={-46}
-              style={{
-                border: "3px solid var(--mantine-color-default)",
-                // Solid background: avatar photos can be transparent PNGs
-                // (the default avatar is), and without this the cover
-                // shows through the transparent top of the photo.
-                backgroundColor: "var(--mantine-color-default)",
-              }}>
-              {viewed.name?.[0] ?? "?"}
-            </Avatar>
+            <div className="av-ring" style={{ marginTop: -46 }}>
+              <Avatar
+                src={viewed.photo}
+                alt={viewed.name}
+                radius={999}
+                size={104}
+                style={{
+                  border: "3px solid var(--mantine-color-default)",
+                  // Solid background: avatar photos can be transparent PNGs
+                  // (the default avatar is), and without this the cover
+                  // shows through the transparent top of the photo.
+                  backgroundColor: "var(--mantine-color-default)",
+                }}>
+                {viewed.name?.[0] ?? "?"}
+              </Avatar>
+            </div>
             <Title order={3} ff="Sora, system-ui, sans-serif" mt="sm">
               {viewed.name}
             </Title>
             <Text c="dimmed">
               <span dir="ltr">@{viewed.username}</span>
             </Text>
-            <Group gap="xl" mt="md">
-              <Count value={totalPosts} label={t.common.posts} />
-              <Count value={followersCount} label={t.common.followers} />
-              <Count value={followingCount} label={t.common.followingCount} />
+            <Group gap="sm" mt="md">
+              <StatChip value={totalPosts} label={t.common.posts} />
+              <UnstyledButton
+                aria-label={t.userProfile.viewFollowersAria}
+                onClick={() => setListOpen("followers")}>
+                <StatChip value={followersCount} label={t.common.followers} />
+              </UnstyledButton>
+              <UnstyledButton
+                aria-label={t.userProfile.viewFollowingAria}
+                onClick={() => setListOpen("following")}>
+                <StatChip value={followingCount} label={t.common.followingCount} />
+              </UnstyledButton>
+              <StatChip value={likesReceived} label={t.userProfile.likesReceived} />
             </Group>
             <Group mt="md">
               <FollowButton userId={viewed._id} initialFollowing={initialFollowing} />
             </Group>
           </Box>
         </Card>
+
+        {listOpen && (
+          <FollowListModal
+            userId={viewed._id}
+            kind={listOpen}
+            ids={listOpen === "followers" ? (viewedFollowers ?? []) : (viewedFollowing ?? [])}
+            opened
+            onClose={() => setListOpen(null)}
+          />
+        )}
 
         <Card padding="lg">
           <Tabs value="posts">

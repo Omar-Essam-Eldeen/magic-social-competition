@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import {
@@ -25,6 +25,7 @@ import { bookmarkPost, deletePost, likePost, sharePost, updatePost } from "../..
 import { useAuth } from "../../context/useAuth.ts";
 import { useLanguage } from "../../context/useLanguage.ts";
 import type { Language } from "../../i18n/dictionary.ts";
+import HashtagText from "./HashtagText.tsx";
 import LikersModal from "./LikersModal.tsx";
 
 const LIKED_COLOR = "#fb4d6d";
@@ -60,6 +61,30 @@ export default function PostCard({ post }: { post: Post }) {
   const [lightbox, setLightbox] = useState<{ src: string; alt: string } | null>(null);
   const [likePop, setLikePop] = useState(false);
   const [likersOpen, setLikersOpen] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // Desktop tilt + shine: fine pointers only, never with reduced motion.
+  // Mutates the card's own style directly — no re-render per pointer move.
+  const handlePointerMove = (e: PointerEvent<HTMLDivElement>) => {
+    const el = cardRef.current;
+    if (!el) return;
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const rect = el.getBoundingClientRect();
+    const x = (e.clientX - rect.left) / rect.width;
+    const y = (e.clientY - rect.top) / rect.height;
+    el.style.setProperty("--mx", `${e.clientX - rect.left}px`);
+    el.style.setProperty("--my", `${e.clientY - rect.top}px`);
+    el.style.transform = `perspective(1100px) rotateX(${(0.5 - y) * 2.4}deg) rotateY(${(x - 0.5) * 2.4}deg) translateY(-2px)`;
+  };
+
+  const handlePointerLeave = () => {
+    const el = cardRef.current;
+    if (!el) return;
+    el.style.transform = "";
+    el.style.removeProperty("--mx");
+    el.style.removeProperty("--my");
+  };
 
   // Release the temporary object URL when the card unmounts.
   useEffect(() => {
@@ -109,21 +134,48 @@ export default function PostCard({ post }: { post: Post }) {
 
   const likeMutation = useMutation({
     mutationFn: (postId: string) => likePost(postId),
-    onSuccess: refresh,
+    onSuccess: () => {
+      refresh();
+      // `liked` is the pre-mutation state, captured in this render.
+      notifications.show({ title: liked ? t.toasts.unliked : t.toasts.liked, message: "" });
+    },
     onError: () =>
       notifications.show({ color: "red", title: t.post.likeErrorTitle, message: t.common.tryAgain }),
   });
 
   const shareMutation = useMutation({
     mutationFn: (postId: string) => sharePost(postId),
-    onSuccess: refresh,
+    onSuccess: async () => {
+      refresh();
+      const url = `${window.location.origin}/posts/${post._id}`;
+      try {
+        if (navigator.clipboard) {
+          await navigator.clipboard.writeText(url);
+        } else {
+          throw new Error("clipboard unavailable");
+        }
+      } catch {
+        // Clipboard API unavailable (or denied) — legacy fallback.
+        const textarea = document.createElement("textarea");
+        textarea.value = url;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+      }
+      notifications.show({ title: t.toasts.linkCopied, message: "" });
+    },
     onError: () =>
       notifications.show({ color: "red", title: t.post.shareErrorTitle, message: t.common.tryAgain }),
   });
 
   const bookmarkMutation = useMutation({
     mutationFn: (postId: string) => bookmarkPost(postId),
-    onSuccess: refresh,
+    onSuccess: () => {
+      refresh();
+      // `post.bookmarked` is the pre-mutation state.
+      notifications.show({ title: post.bookmarked ? t.toasts.unsaved : t.toasts.saved, message: "" });
+    },
     onError: () =>
       notifications.show({ color: "red", title: t.post.saveErrorTitle, message: t.common.tryAgain }),
   });
@@ -143,6 +195,7 @@ export default function PostCard({ post }: { post: Post }) {
     mutationFn: () => deletePost(post._id),
     onSuccess: () => {
       refresh();
+      notifications.show({ title: t.toasts.postDeleted, message: "" });
       // Deleting from the details page would otherwise land on a 404 error
       // screen when the page refetches the deleted post.
       if (location.pathname.startsWith("/posts/")) navigate("/");
@@ -213,15 +266,17 @@ export default function PostCard({ post }: { post: Post }) {
   const sharedImageAlt = t.post.photoAlt(sharedAuthorName);
 
   return (
-    <Card padding="lg">
+    <Card ref={cardRef} padding="lg" className="tilt-card" onPointerMove={handlePointerMove} onPointerLeave={handlePointerLeave}>
       <Group gap="sm" mb="sm">
         <UnstyledButton
           aria-label={t.post.viewProfile(post.user.name)}
           onClick={() => navigate(`/users/${post.user._id}`)}
           style={{ display: "flex" }}>
-          <Avatar src={post.user.photo} alt={post.user.name} radius="xl" size={46}>
-            {post.user.name?.[0]}
-          </Avatar>
+          <div className="av-ring">
+            <Avatar src={post.user.photo} alt={post.user.name} radius="xl" size={46}>
+              {post.user.name?.[0]}
+            </Avatar>
+          </div>
         </UnstyledButton>
         <div>
           <UnstyledButton onClick={() => navigate(`/users/${post.user._id}`)} aria-label={t.post.viewProfile(post.user.name)}>
@@ -285,7 +340,7 @@ export default function PostCard({ post }: { post: Post }) {
       ) : (
         post.body && (
           <Text size="sm" mb="sm">
-            {post.body}
+            <HashtagText text={post.body} />
           </Text>
         )
       )}
@@ -309,27 +364,31 @@ export default function PostCard({ post }: { post: Post }) {
           </Group>
           {sharedPost.body && (
             <Text size="sm" mb={sharedPost.image ? "sm" : undefined}>
-              {sharedPost.body}
+              <HashtagText text={sharedPost.body} />
             </Text>
           )}
           {sharedPost.image && (
-            <UnstyledButton
-              aria-label={t.post.viewFullPhoto(sharedImageAlt)}
-              onClick={() => setLightbox({ src: sharedPost.image as string, alt: sharedImageAlt })}
-              style={{ display: "block", width: "100%" }}>
-              <Image src={sharedPost.image} alt={sharedImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
-            </UnstyledButton>
+            <div className="post-img">
+              <UnstyledButton
+                aria-label={t.post.viewFullPhoto(sharedImageAlt)}
+                onClick={() => setLightbox({ src: sharedPost.image as string, alt: sharedImageAlt })}
+                style={{ display: "block", width: "100%" }}>
+                <Image src={sharedPost.image} alt={sharedImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
+              </UnstyledButton>
+            </div>
           )}
         </Card>
       )}
 
       {!editing && post.image && (
-        <UnstyledButton
-          aria-label={t.post.viewFullPhoto(postImageAlt)}
-          onClick={() => setLightbox({ src: post.image as string, alt: postImageAlt })}
-          style={{ display: "block", width: "100%", marginBottom: 12 }}>
-          <Image src={post.image} alt={postImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
-        </UnstyledButton>
+        <div className="post-img" style={{ marginBottom: 12 }}>
+          <UnstyledButton
+            aria-label={t.post.viewFullPhoto(postImageAlt)}
+            onClick={() => setLightbox({ src: post.image as string, alt: postImageAlt })}
+            style={{ display: "block", width: "100%" }}>
+            <Image src={post.image} alt={postImageAlt} loading="lazy" radius="md" style={POST_IMAGE_STYLE} />
+          </UnstyledButton>
+        </div>
       )}
 
       {topComment?.content && (

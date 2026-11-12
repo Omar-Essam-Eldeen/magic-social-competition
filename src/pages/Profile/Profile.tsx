@@ -18,6 +18,7 @@ import {
   Tabs,
   Text,
   Title,
+  UnstyledButton,
 } from "@mantine/core";
 import { notifications } from "@mantine/notifications";
 import { getProfile } from "../../api/Profile/api.ts";
@@ -25,23 +26,36 @@ import { getBookmarks, getUserPosts, uploadProfilePhoto } from "../../api/Users/
 import { createChangePasswordSchema, type ChangePasswordFormData } from "../../api/Auth/schema.ts";
 import { useAuth } from "../../context/useAuth.ts";
 import { useLanguage } from "../../context/useLanguage.ts";
+import useCountUp from "../../hooks/useCountUp.ts";
 import PostCard from "../../components/Posts/PostCard.tsx";
+import FollowListModal from "../../components/Users/FollowListModal.tsx";
 
-// Subtle violet gradient used when the user has no cover photo.
+// Cinematic cover gradient (glass spec) used when the user has no cover photo.
 const COVER_FALLBACK =
-  "linear-gradient(135deg, #7c3aed 0%, #6d28d9 45%, #4338ca 100%)";
+  "radial-gradient(600px 220px at 85% 0%, rgba(34,211,238,0.55), transparent 60%), radial-gradient(500px 260px at 8% 110%, rgba(217,70,239,0.5), transparent 60%), linear-gradient(118deg, #6d28d9, #4338ca 48%, #0e7490)";
 
-function Count({ value, label }: { value: number; label: string }) {
+/** Animated stat chip: Sora number over an uppercase muted label. */
+function StatChip({ value, label }: { value: number; label: string }) {
+  const animated = useCountUp(value);
   return (
-    <div>
-      <Text fw={700} ff="Sora, system-ui, sans-serif" aria-label={`${value} ${label}`}>
-        {value}
+    <div className="stat-chip">
+      <Text className="stat-value" aria-label={`${value} ${label}`}>
+        {animated}
       </Text>
-      <Text size="xs" c="dimmed">
+      <Text size="xs" c="dimmed" tt="uppercase">
         {label}
       </Text>
     </div>
   );
+}
+
+/**
+ * Read a runtime `following`/`followers` array of user-ID strings off a
+ * user object. The typed User model only carries the counts, but the live
+ * API returns the ID arrays too — read them defensively.
+ */
+function idList(value: unknown): string[] | null {
+  return Array.isArray(value) && value.every((v) => typeof v === "string") ? value : null;
 }
 
 export default function Profile() {
@@ -51,6 +65,7 @@ export default function Profile() {
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"posts" | "saved">("posts");
+  const [listOpen, setListOpen] = useState<"followers" | "following" | null>(null);
 
   const photoMutation = useMutation({
     mutationFn: (photo: File) => uploadProfilePhoto(photo),
@@ -78,6 +93,16 @@ export default function Profile() {
   // The API reports the total across all pages; the loaded page only holds
   // the first few, so prefer the server total when it is present.
   const totalPosts = postsQuery.data?.meta?.pagination?.total ?? posts.length;
+  // Likes received counts only the loaded page of posts — the best the
+  // client can see without a dedicated endpoint.
+  const likesReceived = posts.reduce(
+    (sum, post) => sum + (post.likesCount ?? (post.likes ?? []).length),
+    0,
+  );
+  const followersIds =
+    idList((user as unknown as { followers?: unknown } | undefined)?.followers) ?? [];
+  const followingIds =
+    idList((user as unknown as { following?: unknown } | undefined)?.following) ?? [];
 
   const bookmarksQuery = useQuery({
     queryKey: ["bookmarks"],
@@ -141,21 +166,22 @@ export default function Profile() {
         <Card p={0} style={{ overflow: "hidden" }}>
           <Box h={{ base: 150, sm: 196 }} style={coverStyle} />
           <Box px="md" pb="md">
-            <Avatar
-              src={user.photo}
-              alt={user.name}
-              radius={999}
-              size={104}
-              mt={-46}
-              style={{
-                border: "3px solid var(--mantine-color-default)",
-                // Solid background: avatar photos can be transparent PNGs
-                // (the default avatar is), and without this the cover
-                // shows through the transparent top of the photo.
-                backgroundColor: "var(--mantine-color-default)",
-              }}>
-              {user.name?.[0] ?? "?"}
-            </Avatar>
+            <div className="av-ring" style={{ marginTop: -46 }}>
+              <Avatar
+                src={user.photo}
+                alt={user.name}
+                radius={999}
+                size={104}
+                style={{
+                  border: "3px solid var(--mantine-color-default)",
+                  // Solid background: avatar photos can be transparent PNGs
+                  // (the default avatar is), and without this the cover
+                  // shows through the transparent top of the photo.
+                  backgroundColor: "var(--mantine-color-default)",
+                }}>
+                {user.name?.[0] ?? "?"}
+              </Avatar>
+            </div>
             {/* Page heading: h1, kept at the h3 visual size. */}
             <Title order={1} fz="var(--mantine-h3-font-size)" lh="var(--mantine-h3-line-height)" ff="Sora, system-ui, sans-serif" mt="sm">
               {user.name}
@@ -168,10 +194,19 @@ export default function Profile() {
                 <span dir="ltr">{user.email}</span>
               </Text>
             )}
-            <Group gap="xl" mt="md">
-              <Count value={totalPosts} label={t.common.posts} />
-              <Count value={user.followersCount ?? 0} label={t.common.followers} />
-              <Count value={user.followingCount ?? 0} label={t.common.followingCount} />
+            <Group gap="sm" mt="md">
+              <StatChip value={totalPosts} label={t.common.posts} />
+              <UnstyledButton
+                aria-label={t.profile.viewFollowersAria}
+                onClick={() => setListOpen("followers")}>
+                <StatChip value={user.followersCount ?? 0} label={t.common.followers} />
+              </UnstyledButton>
+              <UnstyledButton
+                aria-label={t.profile.viewFollowingAria}
+                onClick={() => setListOpen("following")}>
+                <StatChip value={user.followingCount ?? 0} label={t.common.followingCount} />
+              </UnstyledButton>
+              <StatChip value={likesReceived} label={t.profile.likesReceived} />
             </Group>
             <FileInput
               placeholder={t.profile.changePhotoPlaceholder}
@@ -184,6 +219,16 @@ export default function Profile() {
             />
           </Box>
         </Card>
+
+        {listOpen && (
+          <FollowListModal
+            userId={user._id}
+            kind={listOpen}
+            ids={listOpen === "followers" ? followersIds : followingIds}
+            opened
+            onClose={() => setListOpen(null)}
+          />
+        )}
 
         <Card padding="lg">
           <Tabs value={tab} onChange={(value) => setTab(value === "saved" ? "saved" : "posts")}>
