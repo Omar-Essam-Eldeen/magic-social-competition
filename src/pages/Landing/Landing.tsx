@@ -24,7 +24,7 @@ export function RootSwitch() {
 function MockFeed() {
   const rows = [0, 1];
   return (
-    <div aria-hidden="true">
+    <div aria-hidden="true" style={{ width: "100%", maxWidth: 640 }}>
       <Card padding="lg" w="100%">
         <Stack gap="lg">
           {rows.map((row) => (
