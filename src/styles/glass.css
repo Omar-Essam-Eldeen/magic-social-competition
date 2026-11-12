@@ -339,12 +339,18 @@ body {
 /* ---- Back to top: floating glass pill, bottom-end corner ----
    Fixed, so it rides above the feed on every page. The bottom offset
    clears the 60px mobile tab bar; on desktop it sits 24px off the edge.
-   Logical inset-inline-end mirrors it in RTL. */
+   Logical inset-inline-end mirrors it in RTL.
+   Verify fix (Round 4): z-index 150, above the AppShell rails (aside
+   z-index 101, header 100) but below modals (200). Round 4's
+   full-height rails run to the viewport bottom, so the pill now
+   overlaps the right rail panel — at the old z-index 90 the panel
+   sat on top of it, ghosting it behind the glass and swallowing its
+   clicks (desktop click timed out in verification). */
 .back-to-top {
   position: fixed;
   inset-inline-end: 16px;
   bottom: 76px;
-  z-index: 90;
+  z-index: 150;
   display: inline-flex;
   align-items: center;
   gap: 8px;
