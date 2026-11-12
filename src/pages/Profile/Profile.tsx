@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { isAxiosError } from "axios";
@@ -62,6 +63,9 @@ export default function Profile() {
   const { changePassword, refreshUser } = useAuth();
   const { t } = useLanguage();
   const queryClient = useQueryClient();
+  const location = useLocation();
+  const passwordCardRef = useRef<HTMLDivElement | null>(null);
+
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<"posts" | "saved">("posts");
@@ -83,6 +87,17 @@ export default function Profile() {
 
   const profileQuery = useQuery({ queryKey: ["profile"], queryFn: getProfile });
   const user = profileQuery.data?.data;
+
+  // Change password from the avatar menu lands here as /profile#change-password:
+  // scroll the change-password card into view (below the sticky header)
+  // and focus its first field. Re-runs once the profile has loaded, so
+  // the card exists when the scroll happens.
+  useEffect(() => {
+    if (location.hash !== "#change-password" || !passwordCardRef.current) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    passwordCardRef.current.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    passwordCardRef.current.querySelector("input")?.focus({ preventScroll: true });
+  }, [location.hash, profileQuery.isPending]);
 
   const postsQuery = useQuery({
     queryKey: ["userPosts", user?._id],
@@ -278,7 +293,7 @@ export default function Profile() {
           </Tabs>
         </Card>
 
-        <Card padding="lg">
+        <Card padding="lg" id="change-password" ref={passwordCardRef} style={{ scrollMarginTop: 76 }}>
           {/* h2 (was h4 — skipped a level after the h1 above), kept at the h4 visual size. */}
           <Title order={2} fz="var(--mantine-h4-font-size)" lh="var(--mantine-h4-line-height)" mb="sm">
             {t.profile.changePasswordTitle}
