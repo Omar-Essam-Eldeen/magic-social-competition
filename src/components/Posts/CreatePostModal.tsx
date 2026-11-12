@@ -17,9 +17,14 @@ export default function CreatePostModal({ opened, onClose }: { opened: boolean; 
       onClose={onClose}
       title={t.chrome.createPostTitle}
       centered
-      size="md"
-      data-testid="create-post-modal">
-      <Composer onCreated={onClose} />
+      size="md">
+      {/* The testid lives on this inner wrapper, not on the Modal itself:
+          Mantine renders the Modal root as a zero-height placeholder at the
+          end of the document (the dialog is portaled elsewhere), so a
+          testid on the Modal is never "visible" to a driver. */}
+      <div data-testid="create-post-modal">
+        <Composer onCreated={onClose} />
+      </div>
     </Modal>
   );
 }
