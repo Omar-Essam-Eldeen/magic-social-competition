@@ -27,7 +27,7 @@ import AppRoutes from "./Routes.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
 import AccountMenu from "./components/AccountMenu.tsx";
 import BackToTop from "./components/BackToTop.tsx";
-import Brand, { LogoMark } from "./components/Brand.tsx";
+import Brand from "./components/Brand.tsx";
 import LanguageToggle from "./components/LanguageToggle.tsx";
 import CreatePostModal from "./components/Posts/CreatePostModal.tsx";
 import TrendingCard from "./components/TrendingCard.tsx";
@@ -260,13 +260,16 @@ export default function App() {
           button, avatar menu. Logged out it is just the mark plus the
           language/theme controls — the sidebar is collapsed then, so the
           header is the only place those controls live. */}
-      <AppShell.Header className="glass-bar">
+      <AppShell.Header className="glass-bar glass-header">
         <Group h="100%" px="md" justify="space-between" gap="sm" wrap="nowrap">
+          {/* Round 4, R1: the full brand (logo + "Magic Social" name) lives
+              here in the top navbar only — it was removed from the sidebar,
+              so this is the single brand on the page. Compact on mobile. */}
           <UnstyledButton
             aria-label={t.common.goHome}
             onClick={() => navigate("/")}
             style={{ display: "flex", flexShrink: 0 }}>
-            <LogoMark size={34} />
+            <Brand size={32} />
           </UnstyledButton>
           {user && <HeaderSearch />}
           <Group gap="xs" wrap="nowrap" style={{ flexShrink: 0 }}>
@@ -316,14 +319,13 @@ export default function App() {
         </Group>
       </AppShell.Header>
 
-      {/* Desktop left navbar: logo at top, nav, Post CTA + at-a-glance card
-          filling the old dead space, then only the EN/AR pill + theme
-          toggle at the bottom — the avatar menu moved to the top navbar. */}
+      {/* Desktop left navbar: nav items first (Round 4, R1 — the brand
+          block that used to sit on top is gone; the brand lives in the
+          top navbar only), then Post CTA + at-a-glance card filling the
+          old dead space, then only the EN/AR pill + theme toggle at the
+          bottom — the avatar menu moved to the top navbar. */}
       <AppShell.Navbar p="md" className="glass-bar" style={{ paddingBottom: 28 }}>
         <Stack h="100%" gap="md">
-          <UnstyledButton aria-label={t.common.goHome} onClick={() => navigate("/")}>
-            <Brand />
-          </UnstyledButton>
           <Stack gap={4}>
             {NAV_ITEMS.map(({ to, label, Icon }) => {
               const active = location.pathname === to;

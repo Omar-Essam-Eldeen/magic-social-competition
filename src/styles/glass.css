@@ -339,6 +339,14 @@ body {
   }
 }
 
+/* ---- Header brand wordmark: shrink slightly on very narrow phones so
+   logo + name + bell + new-post + avatar all fit (Round 4, R1). ---- */
+@media (max-width: 30em) {
+  .brand-wordmark {
+    font-size: 0.95rem !important;
+  }
+}
+
 /* ---- Page bottom breathing room (Round 3, N5) ----
    The last card must never touch or cross the viewport edge: generous
    bottom padding on the main column (extra on mobile, where the 60px
