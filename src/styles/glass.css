@@ -309,6 +309,51 @@ body {
   -webkit-text-fill-color: transparent;
 }
 
+/* ---- Back to top: floating glass pill, bottom-end corner ----
+   Fixed, so it rides above the feed on every page. The bottom offset
+   clears the 60px mobile tab bar; on desktop it sits 24px off the edge.
+   Logical inset-inline-end mirrors it in RTL. */
+.back-to-top {
+  position: fixed;
+  inset-inline-end: 16px;
+  bottom: 76px;
+  z-index: 90;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--glass-strong);
+  -webkit-backdrop-filter: blur(20px) saturate(160%);
+  backdrop-filter: blur(20px) saturate(160%);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    var(--glass-shadow);
+  color: var(--mantine-color-text);
+}
+
+@media (min-width: 48em) {
+  .back-to-top {
+    bottom: 24px;
+  }
+}
+
+/* ---- Page bottom breathing room (Round 3, N5) ----
+   The last card must never touch or cross the viewport edge: generous
+   bottom padding on the main column (extra on mobile, where the 60px
+   tab bar sits), and matching bottom padding on the sticky sidebars so
+   their bottom rows never look sliced. */
+.app-main-pad {
+  padding-bottom: 96px;
+}
+
+@media (min-width: 48em) {
+  .app-main-pad {
+    padding-bottom: 56px;
+  }
+}
+
 /* ---- Focus, selection, like pop ---- */
 :focus-visible {
   outline: 2px solid #22d3ee;

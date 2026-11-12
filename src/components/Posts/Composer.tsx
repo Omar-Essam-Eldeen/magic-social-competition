@@ -7,7 +7,7 @@ import { createPost } from "../../api/Posts/api.ts";
 import type { CreatePostReq } from "../../api/Posts/types.ts";
 import { useLanguage } from "../../context/useLanguage.ts";
 
-export default function Composer() {
+export default function Composer({ onCreated }: { onCreated?: () => void }) {
   const { t } = useLanguage();
   const queryClient = useQueryClient();
   const [body, setBody] = useState("");
@@ -60,6 +60,8 @@ export default function Composer() {
       // Mantine 9 requires `message` on NotificationData; an empty string
       // keeps the toast title-only (the message line is not rendered).
       notifications.show({ title: t.composer.postCreatedTitle, message: "" });
+      // A modal host passes this so the dialog closes once the post is live.
+      onCreated?.();
     },
     onError: () =>
       notifications.show({ color: "red", title: t.composer.createErrorTitle, message: t.common.tryAgain }),

@@ -81,6 +81,13 @@ export const en = {
       count === 1 ? "1 unread notification" : `${count} unread notifications`,
     unreadShort: (count: number): string => (count === 1 ? "1 unread" : `${count} unread`),
   },
+  chrome: {
+    newPost: "New post",
+    newPostAria: "Create a new post",
+    createPostTitle: "Create a post",
+    backToTop: "Back to top",
+    atAGlance: "At a glance",
+  },
   landing: {
     tagline: "Share posts with photos, follow people you like, and save the posts you love.",
     footer: "Magic Social — connect, share, and save what you love.",
@@ -408,6 +415,13 @@ export const ar: Dict = {
       arPlural(count, "إشعار واحد غير مقروء", "إشعاران غير مقروءان", "إشعارات غير مقروءة", "إشعارًا غير مقروء"),
     unreadShort: (count: number): string =>
       arPlural(count, "غير مقروء واحد", "غير مقروءان", "غير مقروءة", "غير مقروء"),
+  },
+  chrome: {
+    newPost: "منشور جديد",
+    newPostAria: "إنشاء منشور جديد",
+    createPostTitle: "إنشاء منشور",
+    backToTop: "العودة إلى الأعلى",
+    atAGlance: "نظرة سريعة",
   },
   landing: {
     tagline: "شارك منشورات مع صور، وتابع الأشخاص الذين يعجبونك، واحفظ المنشورات التي تحبها.",
