@@ -44,20 +44,27 @@ TypeScript + Mantine 9. This folder is a finished, fully verified copy —
 | PWA (manifest, icons, service worker activated + controlling) | **PASS** |
 | Clean install (`npm ci` → build → lint) | **Green** |
 
-## How to deploy it (no repo, no Vercel)
+## How to deploy it (new repo + new Vercel)
 
-You don't need git or Vercel for this. The app is already built — use the
-`magic-social-deploy` folder, which holds the pre-built `dist/`:
+1. On GitHub, create a NEW empty repository (any name, e.g.
+   `magic-social-competition`). Don't add a README or .gitignore — leave it
+   empty.
+2. On your machine, extract the project folder and open a terminal in it:
+   ```bash
+   npm install
+   npm run build        # must be green
+   git init
+   git add -A
+   git commit -m "Competition upgrade"
+   git branch -M main
+   git remote add origin https://github.com/<your-username>/<new-repo>.git
+   git push -u origin main
+   ```
+3. On Vercel, create a NEW project and import the new repo. Framework
+   preset: Vite. No environment variables needed — deploy.
+4. You get a brand-new `.vercel.app` link. The `vercel.json` in the project
+   already handles deep links, so refreshing a post page works.
 
-1. Open https://app.netlify.com/drop (or any static host that serves files).
-2. Drag the `dist` folder onto the page. That's it — the site is live, and
-   you get its link right there.
-3. Any other static host works the same way: upload the contents of `dist/`
-   to the host's public folder. The `_redirects` file inside `dist/` handles
-   deep links on Netlify; on other hosts, set the SPA fallback to
-   `index.html` (one setting — see DEPLOY-ANYWHERE.md).
-
-No build step is needed on the host — the files are already built.
 After deploy, run the walk-the-8 once on your new link
 (see `docs/COMPETITION-CHECKLIST.md`) and confirm the site loads.
 
