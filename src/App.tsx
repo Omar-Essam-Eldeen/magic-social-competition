@@ -21,11 +21,13 @@ import {
   useMantineColorScheme,
 } from "@mantine/core";
 import { modals } from "@mantine/modals";
-import { Bell, Bookmark, Home, LogOut, Moon, Sun, User } from "lucide-react";
+import { Bell, Bookmark, Compass, Home, Moon, Sun, User } from "lucide-react";
 import AppRoutes from "./Routes.tsx";
 import ErrorBoundary from "./components/ErrorBoundary.tsx";
+import AccountMenu from "./components/AccountMenu.tsx";
 import Brand from "./components/Brand.tsx";
 import LanguageToggle from "./components/LanguageToggle.tsx";
+import TrendingCard from "./components/TrendingCard.tsx";
 import SuggestionsCard from "./components/Users/SuggestionsCard.tsx";
 import { getUserPosts } from "./api/Users/api.ts";
 import { getUnreadCount } from "./api/Notifications/api.ts";
@@ -46,9 +48,11 @@ function ProfileMiniCard() {
   return (
     <Card padding="md">
       <Group gap="sm" mb="sm">
-        <Avatar src={user.photo} alt={user.name} radius="xl" size={44}>
-          {user.name?.[0]}
-        </Avatar>
+        <div className="av-ring">
+          <Avatar src={user.photo} alt={user.name} radius="xl" size={44}>
+            {user.name?.[0]}
+          </Avatar>
+        </div>
         <div>
           <Text fw={700} size="sm" ff="Sora, system-ui, sans-serif">
             {user.name}
@@ -82,6 +86,7 @@ export default function App() {
   // live when the language changes — they must live inside the component.
   const NAV_ITEMS = [
     { to: "/", label: t.nav.home, Icon: Home },
+    { to: "/explore", label: t.nav.explore, Icon: Compass },
     { to: "/bookmarks", label: t.nav.saved, Icon: Bookmark },
     { to: "/notifications", label: t.nav.notifications, Icon: Bell },
     { to: "/profile", label: t.nav.profile, Icon: User },
@@ -109,6 +114,7 @@ export default function App() {
     const pathname = location.pathname;
     const pageTitles: Record<string, string> = {
       "/": t.common.titles.home,
+      "/explore": t.common.titles.explore,
       "/login": t.common.titles.login,
       "/signup": t.common.titles.signup,
       "/profile": t.common.titles.profile,
@@ -153,7 +159,7 @@ export default function App() {
           On mobile it is always shown. On desktop it is shown only when
           logged out — otherwise the navbar carries the logo and toggle,
           and a logged-out desktop user would have no way to switch themes. */}
-      <AppShell.Header hiddenFrom={user ? "sm" : undefined}>
+      <AppShell.Header className="glass-bar" hiddenFrom={user ? "sm" : undefined}>
         <Group h="100%" px="md" justify="space-between">
           <UnstyledButton aria-label={t.common.goHome} onClick={() => navigate("/")}>
             <Brand />
@@ -161,66 +167,65 @@ export default function App() {
           <Group gap="xs">
             <LanguageToggle />
             {themeToggle}
-            {user && (
-              // Icon-only here: this header is the mobile header when logged
-              // in, and the full "تسجيل الخروج" label is too wide for 390px —
-              // it wrapped out of the 60px header and covered page content.
-              // The desktop navbar keeps the full labelled button.
-              <ActionIcon
-                variant="light"
-                aria-label={t.common.logout}
-                onClick={handleLogout}>
-                <LogOut size={20} />
-              </ActionIcon>
-            )}
+            {user && <AccountMenu onLogout={handleLogout} />}
           </Group>
         </Group>
       </AppShell.Header>
 
-      {/* Desktop left navbar: logo at top, nav, theme toggle + Logout at the bottom. */}
-      <AppShell.Navbar p="md">
+      {/* Desktop left navbar: logo at top, nav, account menu + toggles at the bottom. */}
+      <AppShell.Navbar p="md" className="glass-bar">
         <Stack h="100%" gap="md">
           <UnstyledButton aria-label={t.common.goHome} onClick={() => navigate("/")}>
             <Brand />
           </UnstyledButton>
           <Stack gap={4}>
-            {NAV_ITEMS.map(({ to, label, Icon }) => (
-              <NavLink
-                key={to}
-                label={label}
-                leftSection={<Icon size={18} />}
-                rightSection={
-                  to === "/notifications" && unreadCount > 0 ? (
-                    <Badge size="sm" color="red" circle aria-label={t.common.unread(unreadCount)}>
-                      {unreadLabel}
-                    </Badge>
-                  ) : undefined
-                }
-                active={location.pathname === to}
-                onClick={() => navigate(to)}
-              />
-            ))}
+            {NAV_ITEMS.map(({ to, label, Icon }) => {
+              const active = location.pathname === to;
+              return (
+                <NavLink
+                  key={to}
+                  label={label}
+                  leftSection={<Icon size={18} />}
+                  rightSection={
+                    to === "/notifications" && unreadCount > 0 ? (
+                      <Badge size="sm" color="red" circle aria-label={t.common.unread(unreadCount)}>
+                        {unreadLabel}
+                      </Badge>
+                    ) : undefined
+                  }
+                  active={active}
+                  style={
+                    active
+                      ? {
+                          background: "var(--accent-grad)",
+                          color: "#fff",
+                          borderRadius: 14,
+                          boxShadow: "0 10px 22px -8px rgba(99,102,241,0.8)",
+                        }
+                      : undefined
+                  }
+                  onClick={() => navigate(to)}
+                />
+              );
+            })}
           </Stack>
           <Box style={{ flex: 1 }} />
           <Group justify="space-between">
+            {user && <AccountMenu onLogout={handleLogout} />}
             <Group gap="xs">
               <LanguageToggle />
               {themeToggle}
             </Group>
-            {user && (
-              <Button variant="light" size="sm" onClick={handleLogout}>
-                {t.common.logout}
-              </Button>
-            )}
           </Group>
         </Stack>
       </AppShell.Navbar>
 
       {/* Desktop right aside: mini profile + suggestions + about. Hidden on mobile/tablet. */}
-      <AppShell.Aside p="md">
+      <AppShell.Aside p="md" className="glass-bar">
         <Stack gap="md">
           <ProfileMiniCard />
           {user && <SuggestionsCard />}
+          {user && <TrendingCard />}
           <Card padding="md">
             <Title order={4} mb="xs">
               {t.nav.aboutTitle}
@@ -240,7 +245,7 @@ export default function App() {
 
       {/* Mobile bottom tab bar — Home, Saved, Notifications, Profile. */}
       {user && (
-        <AppShell.Footer hiddenFrom="sm">
+        <AppShell.Footer hiddenFrom="sm" className="glass-bar">
           <Group h="100%" px="md" justify="space-around">
             {NAV_ITEMS.map(({ to, label, Icon }) => {
               const active = location.pathname === to;

@@ -4,7 +4,7 @@ import { useLanguage } from "../context/useLanguage.ts";
 /** The golden-M artwork from public/logo.png — the one and only logo mark. */
 export function LogoMark({ size = 36 }: { size?: number }) {
   const { t } = useLanguage();
-  return <Image src="/logo.png" alt={t.common.logoAlt} w={size} h={size} radius="md" fit="cover" />;
+  return <Image src="/logo.png" alt={t.common.logoAlt} w={size} h={size} radius="md" fit="cover" style={{ filter: "drop-shadow(0 4px 14px rgba(99,102,241,0.55))" }} />;
 }
 
 /** Logo mark + "Magic Social" wordmark in Sora. */

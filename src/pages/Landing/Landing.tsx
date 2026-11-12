@@ -19,6 +19,47 @@ export function RootSwitch() {
   return user ? <Home /> : <Landing />;
 }
 
+/** CSS-only mock feed preview: gradient avatar dots, fake text bars and a
+    gradient image block — clearly a mockup, no real user data. */
+function MockFeed() {
+  const rows = [0, 1];
+  return (
+    <div aria-hidden="true">
+      <Card padding="lg" w="100%">
+        <Stack gap="lg">
+          {rows.map((row) => (
+            <Stack key={row} gap="md">
+              <Group gap="sm" align="flex-start">
+                <div
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    background: "var(--accent-grad)",
+                    flexShrink: 0,
+                  }}
+                />
+                <Stack gap="xs" style={{ flex: 1 }} pt={4}>
+                  <div style={{ background: "var(--glass-chip)", borderRadius: 6, width: "60%", height: 10 }} />
+                  <div style={{ background: "var(--glass-chip)", borderRadius: 6, width: "40%", height: 10 }} />
+                </Stack>
+              </Group>
+              <div
+                style={{
+                  borderRadius: 17,
+                  height: 140,
+                  background: "linear-gradient(135deg,#7c3aed,#0e7490)",
+                  opacity: 0.8,
+                }}
+              />
+            </Stack>
+          ))}
+        </Stack>
+      </Card>
+    </div>
+  );
+}
+
 export default function Landing() {
   const navigate = useNavigate();
   const { t } = useLanguage();
@@ -42,18 +83,18 @@ export default function Landing() {
   ] as const;
 
   return (
-    <Container size={720} py="xl">
+    <Container size={900} py="xl">
       <Stack gap="xl" align="center">
         <Stack gap="md" align="center" ta="center">
           <LogoMark size={72} />
           <Title order={1} ff="Sora, system-ui, sans-serif">
-            Magic Social
+            Magic <span className="grad-text">Social</span>
           </Title>
           <Text size="lg" c="dimmed" maw={480}>
             {t.landing.tagline}
           </Text>
           <Group gap="sm" mt="xs">
-            <Button size="md" onClick={() => navigate("/login")}>
+            <Button size="md" variant="gradient" onClick={() => navigate("/login")}>
               {t.common.login}
             </Button>
             <Button size="md" variant="outline" onClick={() => navigate("/signup")}>
@@ -61,6 +102,8 @@ export default function Landing() {
             </Button>
           </Group>
         </Stack>
+
+        <MockFeed />
 
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md" w="100%">
           {features.map(({ Icon, title, text }) => (
