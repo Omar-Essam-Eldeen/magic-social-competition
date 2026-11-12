@@ -8,10 +8,11 @@ production address **https://magic-social-competition.vercel.app**
 first-deploy URL with the `5fq473ges` hash — that is a pinned
 per-deployment snapshot and never updates; the address above is the
 one that always serves the latest build. Deployment Protection is OFF.
-This folder is the **Round 3** upgrade on top of Round 2 — a proper
-sticky glass top navbar, a filled sidebar, a back-to-top button, and
-the bottom-cards radius/padding fix. Push this folder's `main` to the
-repo and Vercel auto-deploys it to the same live link.
+This folder is the **Round 4** upgrade on top of Round 3 — chrome
+polish: the brand lives in the navbar only, no hard divider line under
+it, both sidebars take the full viewport height with rounded corners,
+and the right-aside cards scroll fully into view. Push this folder's
+`main` to the repo and Vercel auto-deploys it to the same live link.
 
 ## What changed
 
@@ -119,6 +120,45 @@ before the posts list above it rendered, pushing the card off-viewport
 (it now waits for profile AND posts to settle). Both fixed and
 re-verified — see `STAGELOG.md`.
 
+## Round 4 — Chrome polish: brand once, no hard line, full-height rounded sidebars (2026-11-12)
+
+You said the navbar had a hard line breaking the design, the sidebars
+still had sharp edges and didn't take the viewport height, the right
+sidebar's bottom cards were half visible / half hidden, and the brand
+logo + name should be in the navbar only — not also in the sidebar
+underneath it. Round 4 builds on Round 3 (glass design kept):
+
+- **R1 Brand in the navbar only:** the full brand (golden-M logo +
+  "Magic Social" name) lives in the top navbar, left side. The
+  duplicate brand block at the top of the left sidebar is gone — the
+  sidebar starts directly with the nav items. Mobile keeps logo +
+  name, compact.
+- **R2 No hard divider line:** Mantine's own 1px AppShell borders are
+  off (`withBorder={false}`) and the glass bar has no bottom border —
+  separation is glass blur + a very subtle shadow and a 14px gradient
+  fade under the header, so the bar blends into the page instead of
+  slicing it. Glass-card borders (card definition) were kept.
+- **R3 Full-height sidebars, rounded corners:** both rails stretch
+  from below the navbar to the viewport bottom (Mantine's 60px footer
+  offset no longer cuts them short on desktop). The visible glass
+  lives on an inner panel inset 12px on every side with the 22px
+  radius token, so the rounded corners are actually visible instead
+  of clipped by the viewport edge. The sidebar bottom row (EN/AR pill
+  + theme toggle) sits inside the panel with breathing room.
+- **R4 Bottom cards fully reachable:** both rails scroll internally
+  (independent of the page scroll) with bottom padding inside the
+  scroll area, so the last card (About on the right, At-a-glance on
+  the left) scrolls fully into view — never half visible / half
+  hidden. The left rail's EN/AR + theme row is pinned at the panel
+  bottom. The center feed keeps the page scroll; the rails stay put.
+
+Two real bugs found in Round 4 verification and fixed: at short
+viewport heights the rail cards squashed instead of scrolling (the
+"View profile" button collapsed to 5px tall — flex children now
+never shrink) and the back-to-top pill was unclickable on desktop
+(the full-height rails sat above it — its z-index now sits above the
+rails, below modals). Both fixed and re-verified — see `STAGELOG.md`.
+
 ## What was tested — Round 2 (all 2026-11-12, throwaway accounts only)
 
 | Check | Result |
@@ -148,17 +188,32 @@ testing were deleted/undone afterwards; testmagic99 is back to its
 pre–Round 3 post count and testmagic3's password was changed and changed
 back to `Test5678!`.
 
-## How to deploy Round 3
+## What was tested — Round 4 (all 2026-11-12, throwaway accounts only)
+
+| Check | Result |
+|---|---|
+| Functional pass — walk-the-8 + full regression + all Round 4 chrome (brand once in header, no hard line, rail heights/corners, aside scrolled to bottom, back-to-top click, navbar menu, new-post modal, keyboard, reduced motion) | **96/96 PASS** |
+| Visual + axe shots (Home, Explore, PostDetails, Profile, Home RTL — light + dark, desktop + mobile, incl. 1280×800 laptop height and rails scrolled to bottom) | **79/79 PASS, axe 0 violations** |
+| Keyboard focus ring while tabbing | **12/12 stops visible** |
+| Reduced motion (orbs static, no card tilt, back-to-top instant) | **PASS** |
+| `npm run build` + `npm run lint` | **Green / clean** |
+
+All probe posts, comments, replies, follows and bookmarks created during
+testing were deleted/undone afterwards; testmagic99 has 18 own posts
+with zero probe posts left, followers 0 / following 0, and testmagic3's
+password was changed and changed back to `Test5678!`.
+
+## How to deploy Round 4
 
 The repo and Vercel project already exist (created for Round 1). Deploying
-Round 3 is just a push — Vercel auto-deploys `main` to the stable
+Round 4 is just a push — Vercel auto-deploys `main` to the stable
 production address **https://magic-social-competition.vercel.app**:
 
 ```bash
 npm install
 npm run build        # must be green
 git add -A
-git commit -m "Round 3: top navbar + filled sidebar + bottom-cards fix"
+git commit -m "Round 4: brand once, no hard line, full-height rounded sidebars"
 git push origin main
 ```
 

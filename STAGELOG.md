@@ -901,3 +901,120 @@ fix the bottom cards.
   - Fresh throwaway accounts `r3v*` created by the verification runs
     remain on the API (no delete-account endpoint) — harmless, same as
     Round 2 practice.
+
+## Round 4 — Chrome polish: brand once, no hard line, full-height rounded sidebars (2026-11-12)
+
+User feedback (~18:33, annotated screenshot): the navbar has a hard
+line that breaks the design; the sidebars still have sharp edges and
+don't take the viewport height; the right sidebar's bottom cards are
+half visible / half hidden; and the brand logo + name should be in the
+navbar ONLY, not in the navbar and the sidebar underneath it. Fix all
+that now.
+
+### Implementation (4 commits on top of `5d234aa`)
+
+- `42883d9` — R1 brand in the navbar only: header renders the full
+  `<Brand size={32} />` (logo + name) instead of the mark alone;
+  duplicate brand block removed from the sidebar top; `.brand-wordmark`
+  shrinks to 0.95rem under 480px.
+- `3c6c6e3` — R2 kill the hard divider line: `withBorder={false}` on
+  the AppShell root (Mantine's own 1px borders gone), `.glass-bar`
+  border-bottom removed, 14px gradient fade strip under the header
+  (`.glass-header::after`), soft upward shadow on the mobile tab bar.
+  Glass-card borders kept.
+- `8585daa` — R3 full-height sidebars, 22px corners: root cause was
+  Mantine's AppShell rail height `calc(100dvh − header − footer-offset)`
+  — the 60px footer offset still applied on desktop even though the
+  tab bar is only visually hidden above `sm`, so rails stopped 60px
+  short. Rails are now transparent structural columns with an inline
+  height override `calc(100dvh − var(--app-shell-header-offset,
+  3.75rem))`; the visible glass lives on an inner `.chrome-rail-panel`
+  inset 12px on every side with the 22px radius token. Result is
+  floating glass panels (12px gaps all round) rather than edge-to-edge
+  full-bleed — that is what makes the rounded corners visible instead
+  of clipped.
+- `a40c448` — R4 rails scroll internally: `.chrome-rail-scroll`
+  (`flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  overscroll-behavior: contain`, thin scrollbar, 28px bottom padding
+  inside the scroll area); left rail's EN/AR + theme row pinned at the
+  panel bottom (`.chrome-rail-foot`, soft shadow only, no hard line).
+  Center feed keeps the page scroll; rails stay put.
+
+### What changed
+
+- **R1 Brand in the navbar only:** brand appears exactly once in the
+  app — header, left side. Sidebar starts directly with the nav items.
+  `public/logo.png` stays for the navbar + favicon.
+- **R2 No hard divider line:** no `border-bottom/top/inline` rules
+  remain in `glass.css` outside comments; separation is glass blur +
+  very subtle shadow + gradient fade only.
+- **R3 Full-height sidebars:** rail panels top 72 / bottom = viewport
+  − 12px with 22px corners at 1440×900 and 1280×800; sidebar bottom
+  row fully visible with breathing room.
+- **R4 Bottom cards fully reachable:** About card fully inside the
+  right panel at rail bottom (measured 616–743 of panel 72–788 at
+  1280×800); At-a-glance likewise on the left. Left rail stays put
+  while the feed scrolls (top 72 → 72).
+
+### Verification (2026-11-12, throwaway accounts only)
+
+- `npm run build` GREEN, `npm run lint` exit 0 (after every stage
+  and after each fix).
+- Visual / chrome: **79/79 PASS** (final run) — brand exactly once in
+  header on Home/Explore/Profile at 1440×900, 1280×800, dark, RTL
+  and mobile; header `border-bottom: 0px` with a real 14px
+  `linear-gradient` fade strip in both themes; both rail panels top 72
+  / bottom = viewport − 12px with 22px corners at both heights;
+  sidebar bottom row fully visible (e.g. 725–771 of 800px); About card
+  fully inside the right panel at rail bottom; left rail stays put
+  while the feed scrolls; axe 0 violations on Home, Explore,
+  PostDetails, Profile, Home RTL (5 scans).
+- Functional: **96/96 PASS** (final run) — walk-the-8 + full
+  regression + all Round 4 chrome: navbar menu items (profile /
+  change-password scroll+focus / logout → log back in), new-post modal
+  from navbar AND sidebar CTA, back-to-top appear/hide/scroll/click,
+  bell badge == API unread count, header search, At-a-glance numbers,
+  keyboard focus ring 12/12 stops, reduced motion PASS.
+- Two real defects found in verification and fixed (see commits
+  below): rail cards squashed at short heights (flex children shrank
+  instead of scrolling — "View profile" button collapsed to 5px tall
+  at 1280×800; fixed with `flex-shrink: 0` on rail scroll children),
+  and back-to-top unclickable on desktop (full-height rails at
+  z-index 101 ghosted the pill at z-index 90; raised to 150, above
+  rails/header, below modals at 200). First-run scores before the
+  fixes were 77/79 shots and 94/96 functional. The other 2 first-run
+  shot "failures" were harness artifacts (English strings probed on
+  the Arabic RTL page; screenshots showed the cards fully visible).
+- Investigated and cleared: "FAILED REQUESTS" in logs are 404s from
+  refetching deleted probe posts plus one image fetch error for a
+  deleted post's image — expected post-cleanup noise. The single
+  console error is a Cairo font download failure from
+  `fonts.gstatic.com` (sandbox proxy), fallback rendering fine.
+- Cleanup verified via API: all probe posts deleted (0 `R4Verify` /
+  `R3Verify` hits); testmagic99 has 18 own posts, followers 0 /
+  following 0, 0 unread. User's real account never touched ("wefwe" /
+  "test.." intact).
+
+### Delivery (2026-11-12)
+
+- Final state: `npm run build` GREEN, `npm run lint` exit 0.
+- Commits on `main` (6 ahead of `origin/main` before push, plus this
+  docs commit): `42883d9`, `3c6c6e3`, `8585daa`, `a40c448`,
+  `618aed4` (verify fix: rail scroll children must not shrink),
+  `16c0f6a` (verify fix: back-to-top z-index above full-height rails).
+- Deploy: `git push origin main` → Vercel auto-deploys to the stable
+  production address https://magic-social-competition.vercel.app.
+  Verify anonymously afterwards (root 200, new bundle hash, title
+  "Magic Social", `/login` 200, `manifest.webmanifest` 200, service
+  worker 200; Deployment Protection must stay OFF). NEVER check or
+  share the `5fq473ges` snapshot URL — it never updates.
+- Open items as they now stand:
+  - Competition name / deadline / judging criteria — unknown (only
+    known: share on LinkedIn + mention the organizers, weeks left,
+    organizer handle not given).
+  - His two posts "wefwe" / "test.." are still on the live feed — only
+    he can delete them (his account); flagged, not touched.
+  - @testmagic99 has 7 unread notifications from other users —
+    pre-existing, left as-is.
+  - Throwaway avatars are the uploaded favicon (no un-upload endpoint)
+    — harmless, throwaway accounts only.
