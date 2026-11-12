@@ -33,7 +33,7 @@ createRoot(document.getElementById("root")!).render(
       <MantineProvider theme={theme} cssVariablesResolver={themeVariables} defaultColorScheme="auto">
         <Backdrop />
         <LanguageProvider>
-          <Notifications classNames={{ root: "glass-toast" }} />
+          <Notifications classNames={{ notification: "glass-toast" }} />
           <ModalsProvider>
             <BrowserRouter>
               <AuthProvider>

@@ -122,7 +122,10 @@ export const theme = createTheme({
       styles: { input: fieldInput },
     },
     Modal: {
-      classNames: { root: "glass-pop" },
+      // The glass goes on the dialog content, NOT the root: the root is
+      // the full-viewport portal wrapper, and styling it painted the
+      // whole screen (same container-layer mistake as Notifications).
+      classNames: { content: "glass-pop" },
     },
   },
 });
