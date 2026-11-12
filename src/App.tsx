@@ -250,6 +250,11 @@ export default function App() {
 
   return (
     <AppShell
+      // Round 4, R2: withBorder={false} kills Mantine's own 1px AppShell
+      // borders (header bottom, navbar inline-end, aside inline-start,
+      // footer top) — the hard lines slicing the layout. Separation is
+      // soft glass blur + shadow only; see .glass-bar in glass.css.
+      withBorder={false}
       header={{ height: 60 }}
       navbar={{ width: 264, breakpoint: "sm", collapsed: { mobile: true, desktop: !user } }}
       aside={{ width: 320, breakpoint: "lg", collapsed: { mobile: true, desktop: !user } }}
@@ -403,7 +408,7 @@ export default function App() {
 
       {/* Mobile bottom tab bar — Home, Saved, Notifications, Profile. */}
       {user && (
-        <AppShell.Footer hiddenFrom="sm" className="glass-bar">
+        <AppShell.Footer hiddenFrom="sm" className="glass-bar glass-bar-footer">
           <Group h="100%" px="md" justify="space-around">
             {NAV_ITEMS.map(({ to, label, Icon }) => {
               const active = location.pathname === to;

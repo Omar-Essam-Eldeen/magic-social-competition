@@ -51,16 +51,43 @@ body {
   box-shadow: inset 0 1px 0 var(--glass-edge);
 }
 
-/* App bar / mobile bottom nav: stronger blur, bottom border only. */
+/* App bar / mobile bottom nav: stronger blur, NO hard border anywhere
+   (Round 4, R2). The old 1px border-bottom under the navbar was the line
+   slicing the design, and the same class put a line on the bottom edge
+   of the sidebars too. Separation is soft now: glass blur + a very
+   subtle shadow only. Mantine's own AppShell borders are switched off
+   with withBorder={false} on the shell (header bottom, navbar
+   inline-end, aside inline-start, footer top) — this class must not
+   reintroduce any of them. */
 .glass-bar {
   background: var(--glass-bar);
   -webkit-backdrop-filter: blur(22px) saturate(170%);
   backdrop-filter: blur(22px) saturate(170%);
   border: 0;
-  border-bottom: 1px solid var(--glass-border);
   box-shadow:
     inset 0 1px 0 var(--glass-edge),
     0 12px 32px -18px rgba(0, 0, 10, 0.5);
+}
+
+/* Top navbar: a soft gradient fade under the bar instead of a line.
+   The strip paints 14px below the header and fades to transparent, so
+   the bar blends into the page rather than slicing it. */
+.glass-header::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 100%;
+  height: 14px;
+  background: linear-gradient(to bottom, var(--glass-bar), transparent);
+  pointer-events: none;
+}
+
+/* Mobile bottom tab bar: the soft shadow points upward, not down. */
+.glass-bar-footer {
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    0 -12px 32px -18px rgba(0, 0, 10, 0.5);
 }
 
 /* Popovers and modals: the popover fill over the base glass recipe.
