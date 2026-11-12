@@ -605,3 +605,172 @@ accounts; all test state restored. Results:
     harmless, throwaway accounts only.
 - Delivery verification (this phase): `npm run build` GREEN,
   `npm run lint` exit 0 — see below.
+
+---
+
+## Round 2 — Cinematic glass return (2026-11-12)
+
+Trigger: he looked at the live Round 1 site and said it looks plain —
+"where is the 3d cinematic, glassy designs we agreed on?", the Arabic
+button should be "AR" instead of "عربي", and log out needs a better place.
+Then: "okay let's build it all and make it functional and working 100% no
+mistakes no stops gogo". Work in this copy only, same rules as Round 1
+(never the old repo, never the live deploy directly — push to the new repo
+and Vercel auto-deploys). Glass theme spec is again the visual target
+(Inter UI + Sora display kept from Round 1; Manrope NOT added).
+
+### Stage A — Cinematic glass foundation (`eed550e`)
+
+- `theme.ts` rewritten to glass tokens; `src/styles/glass.css` created
+  (old `app.css` deleted); `src/components/Backdrop.tsx` new (gradient
+  mesh + 3 drifting orbs); `main.tsx` imports glass.css, renders Backdrop
+  + Notifications; `index.html` theme-color + OG URLs moved to the new
+  live domain.
+- Notes: body font Inter per instruction; `.glass-pop` omits the spec's
+  `min(340px, 86vw)` width (belongs at the popover usage site, not the
+  Modal root); `.post-img` adds aspect-ratio 16/9 + object-fit cover;
+  Button `gradient` variant restyled via theme vars/styles (Mantine 9
+  already ships a `gradient` variant name); orb opacities live in
+  glass.css under `[data-mantine-color-scheme]`; focus ring cyan `#22d3ee`.
+
+### Dictionary keys (`4c3704d`)
+
+- EN + AR keys for explore, trending, follow lists, toasts, composer.
+
+### Stage B — Glass shell, landing showcase, EN/AR pill, avatar logout menu (`4e4dcd8`)
+
+- App.tsx glass-bar shell, active nav gradient pill, Explore nav item
+  (Compass icon), TrendingCard in the aside, ProfileMiniCard avatar ring,
+  `AccountMenu.tsx` new (avatar target, Profile + Log out items,
+  glass-pop dropdown), LanguageToggle EN/AR pill, Landing rewrite with
+  grad-text headline + MockFeed (CSS-built, no user-data screenshots),
+  Brand glow.
+
+### Stage C — Alive post cards, cinematic profiles, follow lists, profile links (`6f2a54a`)
+
+- `HashtagText.tsx` new (tags link to `/?q=%23…`), `useCountUp.ts` new,
+  `FollowListModal.tsx` new, PostCard tilt+shine (fine-pointer +
+  no-reduced-motion only), av-ring, post-img wrappers, hashtag rendering,
+  like/bookmark/share/delete toasts (`notifications.show` needs
+  `message: ""` in this Mantine version — title-only toasts), share copies
+  `${origin}/posts/:id` with textarea fallback, Profile + UserProfile
+  cinematic cover gradient + av-ring + 4 stat chips with useCountUp +
+  clickable followers/following, CommentItem + SuggestionsCard author links.
+
+### Stage D — Explore, trending hashtags, drag-drop composer, hashtag search (`a950add`)
+
+- `Explore.tsx` new (infinite grid of image posts), `TrendingCard.tsx`
+  new (top 5 tags from first 30 posts, click → `/?q=%23tag`), Composer
+  drag-and-drop + char counter + remove-image button + post-created toast,
+  Home `?q=` support (param syncs search, typing never writes the param,
+  clear also clears the param; `eslint-disable` for
+  `react-hooks/set-state-in-effect` with justification), Routes `/explore`
+  protected route.
+
+### Verification fixes (`7b57eec`, `cd5eb7c`, `9f98c04`, `836ea6c`)
+
+- Axe label-in-name on follow-count buttons: dropped the spaced
+  aria-labels (axe compares against the space-less concatenated visible
+  text, so a spaced label can never match); name now comes from content.
+  Bookmarks had no h1 (Title order 1 at h3 size).
+- **Stray white bars:** two 440×2px white pills on every page — Mantine's
+  empty Notifications containers (top-center and bottom-center) painted by
+  `.glass-toast` on `classNames={{ root }}` in main.tsx; same mistake for
+  Modal (`root` is the full-viewport portal wrapper). Fix: Notifications →
+  `classNames={{ notification: "glass-toast" }}`; Modal →
+  `classNames: { content: "glass-pop" }`. Lesson: glass classes go on
+  Mantine *item/content* layers, never container/root layers.
+- **Landing mock feed strip:** MockFeed collapsed to a ~110px strip
+  (centered Stack shrink-to-fit). Fix: wrapper
+  `width: 100%, maxWidth: 640`.
+
+### Verification — visual + axe (`round2-shots.js`, 2026-11-12)
+
+- Harness: headless Firefox via Playwright with the proxy from env
+  (Chromium's CONNECT tunnels are rejected by the sandbox proxy);
+  preview server on `http://localhost:4173` (binds `::1` only — never
+  `127.0.0.1`).
+- **22/22 PASS, exit 0** (run 4, after the fixes above): landing loads
+  logged-out; axe 0 violations on landing, home, explore, post details,
+  profile, bookmarks, notifications (all light) + home RTL; feed loads
+  after login; 19 `.glass-card`, 3 `.orb`, EN/AR pill, Explore nav,
+  Trending card, account menu opens, explore loads, 4 `.stat-chip`;
+  AR switch sets `dir=rtl`, RTL feed no horizontal overflow (0px),
+  mobile feed no horizontal overflow (0px).
+- Visual review (screenshots `shots/round2/`): light feed genuinely
+  glassy; dark feed deep midnight glass with violet/cyan orbs, no
+  bright-line artifact; landing mock feed proper width in light + dark +
+  mobile; profile cinematic cover + avatar ring + 4 chips; explore grid
+  clean on desktop + mobile; RTL fully mirrored.
+- Screenshots: `~/workspace/predeploy/visual-verify/shots/round2/`
+  (22 files), log `round2-shots4.log`.
+
+### Verification — functional (`round2-functional.js`, 2026-11-12)
+
+- Walk-the-8 + every Round 2 feature, headless Firefox vs the preview
+  build, throwaway accounts only (fresh `r2v…` account per run +
+  testmagic99/2/3). All probe posts/comments/replies/follows/bookmarks
+  deleted/undone afterwards; testmagic3's password changed and changed
+  back to `Test5678!` (verified by login afterwards).
+- **Final run (run 8): 49/49 PASS, exit 0** — signup, avatar-menu logout +
+  login, feed, drag-drop composer (preview + char counter + remove),
+  create post with image + hashtag, hashtag → `?q=` search + clear,
+  trending lists the tag, explore grid + tile opens post, like (toast +
+  count 1) / likers modal / unlike, bookmark + Saved page + unbookmark,
+  share copy-link toast, comment add / author link / edit / reply /
+  reply-delete / comment-delete, post edit, suggestion link, profile
+  4 stat chips + photo upload, follow flow + followers/following modals +
+  unfollow, notifications + mark all read, post delete, change-password
+  round-trip, AR pill RTL + back, keyboard focus ring 12/12 stops,
+  final logout, reduced motion (orbs static, no tilt).
+- Two REAL bugs found by this pass and fixed (see below); the remaining
+  failures across runs 1–7 were harness bugs (wrong selectors, anchored
+  regexes, case-sensitive checks vs uppercase-transformed chips, a race
+  on the like count, fixed sleeps under a flaky network) plus one flaky
+  unfollow click that a standalone probe could not reproduce (the button
+  reads "Following" correctly). One run (run 7) hit sandbox network
+  flakiness (R2 image loads failing with NS_ERROR_DOM_NETWORK_ERR) — its
+  3 failures were re-proven as timing flakes by a focused delete probe
+  (reply + comment both delete from the UI and the API shows 0 comments
+  remaining) and by run 8 going 49/49.
+- Only "failed requests" in the final run: two 404s for the deleted probe
+  post and its replies list — stale refetches after deletion, benign.
+
+### Round 2 fixes found in verification
+
+1. **Follow/unfollow showed no toast (`8f3ff31`).** The
+   `followed`/`unfollowed` dictionary strings existed but FollowButton
+   never called `notifications.show` on success — the button just flipped
+   state silently. FollowButton now takes the display name (`userName`,
+   required) and toasts "Following X" / "Unfollowed X"; all three callers
+   (UserProfile, SuggestionsCard, FollowListModal) pass the name.
+2. **Deleting/editing/liking a nested reply left it on screen
+   (`ce0784b`).** Replies live under `["replies", postId,
+   parentCommentId]` but CommentItem's `refresh()` only invalidated
+   `["comments", postId]` and `["post", postId]`. `refresh()` now also
+   invalidates the `["replies", postId]` prefix — fixes delete, edit and
+   like of nested replies in one place.
+
+### Delivery (2026-11-12)
+
+- Final state: `npm run build` GREEN, `npm run lint` exit 0.
+- Commits on `main` (9 Round 2 + 2 verify fixes = 11 ahead of
+  `origin/main` before push): `eed550e`, `4c3704d`, `4e4dcd8`, `6f2a54a`,
+  `a950add`, `7b57eec`, `cd5eb7c`, `9f98c04`, `836ea6c`, `8f3ff31`,
+  `ce0784b`, plus this docs commit.
+- Deploy: `git push origin main` → Vercel auto-deploys to the existing
+  live URL. Verify anonymously afterwards (root 200, title
+  "Magic Social", `/login` 200; Deployment Protection must stay OFF).
+- Open items as they now stand:
+  - Competition name / deadline / judging criteria — unknown (asked
+    Nov 11 and Nov 12, no reply; only known: share on LinkedIn + mention
+    the organizers, weeks left, organizer handle not given).
+  - His two posts "wefwe" / "test.." are still on the live feed — only he
+    can delete them (his account); flagged, not touched.
+  - @testmagic99 has 7 unread notifications from other users — pre-existing,
+    left as-is.
+  - Throwaway avatars are the uploaded favicon (no un-upload endpoint) —
+    harmless, throwaway accounts only.
+  - Fresh throwaway accounts `r2vwdmxrfj`, `r2vwdn1s3t`, … created by the
+    verification runs remain on the API (no delete-account endpoint) —
+    harmless, same as Round 1's `p6v…` accounts.

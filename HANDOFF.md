@@ -1,9 +1,13 @@
 # Magic Social — Competition Upgrade: Handoff
 
-**What this is:** the competition upgrade of your deployed Mantine app
-([live site](https://socialapp-seven-phi.vercel.app/)). React 19 + Vite +
-TypeScript + Mantine 9. This folder is a finished, fully verified copy —
-**nothing was pushed and the live site is untouched**. You decide when to deploy it.
+**What this is:** the competition upgrade of your deployed Mantine app.
+React 19 + Vite + TypeScript + Mantine 9. **Round 1 is already live** at
+https://magic-social-competition-5fq473ges-omar-essam-eldeen.vercel.app
+(repo: `Omar-Essam-Eldeen/magic-social-competition`, deployed 2026-11-12).
+This folder is the **Round 2** upgrade on top of it — cinematic glass
+design is back, plus Explore, trending hashtags, followers/following
+lists, a better composer, profile stats, and more. Push this folder's
+`main` to the repo and Vercel auto-deploys it to the same live link.
 
 ## What changed
 
@@ -32,40 +36,83 @@ TypeScript + Mantine 9. This folder is a finished, fully verified copy —
 - **Phase 6 — Final verification:** clean install, walk-the-8, full feature
   pass, API sweep — all green, zero app defects. See `STAGELOG.md`.
 
-## What was tested (all 2026-11-11, throwaway accounts only)
+## Round 2 — Cinematic glass return (2026-11-12)
+
+You said the live Round 1 site looked plain and asked for the 3D
+cinematic, glassy design back, the Arabic button as "AR", and log out in a
+better place. Round 2 builds on Round 1 (nothing reverted except the
+visuals):
+
+- **D1 Glass system:** glass cards, gradient-mesh backdrop with three
+  drifting orbs, glowing brand, Sora headings — light and dark both have
+  real depth now. Reduced-motion safe (orbs freeze, card tilt off).
+- **D2 Landing showcase:** big gradient headline, CSS-built mini feed
+  mockup (no screenshots of user data), Log in / Sign up.
+- **D3 Post cards alive:** hover lift + glow, image zoom, like burst,
+  gradient avatar rings; hashtags in post text link to search.
+- **D4 Cinematic profile:** gradient cover, glowing avatar ring, animated
+  count-up stats — Posts, Followers, Following, **Likes received**.
+- **D5 Micro-interactions + toasts:** like/bookmark/share/delete/follow all
+  toast; follow/unfollow toasts were missing and are now wired in.
+- **F1 Explore page** (`/explore`): photo grid of image posts, click a tile
+  to open the post.
+- **F2 Trending hashtags:** top tags from loaded posts in the sidebar;
+  click one to search that tag.
+- **F3 Followers / Following lists:** click the counts on any profile for
+  the list, with follow buttons inside.
+- **F4 Better composer:** drag-and-drop an image (with preview + remove),
+  live character counter (display only — never blocks posting).
+- **F5 Profile stats:** likes received = likes across your loaded posts.
+- **F6 Share:** copies the post link + toast (keeps the share API call).
+- **X1** Language button is now a clean `EN / AR` pill. **X2** Log out
+  moved into a menu under your avatar (sidebar bottom, no new navbar).
+  **X3** Profiles are clickable everywhere: Who-to-follow names, comment
+  authors, likers, follower lists.
+
+Two real bugs found in Round 2 verification and fixed: follow/unfollow
+showed no toast at all (the dictionary strings existed but nothing called
+them), and deleting/editing/liking a nested reply left the stale reply on
+screen (the replies query was never invalidated). Both fixed and
+re-verified — see `STAGELOG.md`.
+
+## What was tested — Round 2 (all 2026-11-12, throwaway accounts only)
 
 | Check | Result |
 |---|---|
-| Walk-the-8 (signup → login → feed → post/comment CRUD → profile → change password, staying logged in) | **11/11 PASS** |
-| Feature pass (likes, likers, bookmarks, share, filters, infinite scroll, image edit, follow, notifications, search, dark, Arabic, PWA, mobile) | **All PASS** |
-| API sweep (11 endpoints incl. notifications + PWA files) | **11/11 PASS** |
-| RTL visual check (Arabic, desktop + mobile, light + dark) | **PASS** |
-| axe accessibility, 7 pages | **0 violations** |
-| PWA (manifest, icons, service worker activated + controlling) | **PASS** |
-| Clean install (`npm ci` → build → lint) | **Green** |
+| Visual + axe shots (22 checks: landing, feed, explore, post details, profile, bookmarks, notifications, RTL, mobile) | **22/22 PASS, axe 0 violations** |
+| Functional pass — walk-the-8 + all Round 2 features (signup, login, feed, post/comment/reply CRUD, profile, change password round-trip, explore, hashtags, trending, follow lists, drag-drop composer, toasts, AR pill, keyboard, reduced motion) | **49/49 PASS** |
+| Keyboard focus ring while tabbing | **12/12 stops visible** |
+| Reduced motion (orbs static, no card tilt) | **PASS** |
+| `npm run build` + `npm run lint` | **Green / clean** |
 
-## How to deploy it (new repo + new Vercel)
+All probe posts, comments, replies, follows and bookmarks created during
+testing were deleted/undone afterwards; testmagic3's password was changed
+and changed back to `Test5678!`.
 
-1. On GitHub, create a NEW empty repository (any name, e.g.
-   `magic-social-competition`). Don't add a README or .gitignore — leave it
-   empty.
-2. On your machine, extract the project folder and open a terminal in it:
-   ```bash
-   npm install
-   npm run build        # must be green
-   git init
-   git add -A
-   git commit -m "Competition upgrade"
-   git branch -M main
-   git remote add origin https://github.com/<your-username>/<new-repo>.git
-   git push -u origin main
-   ```
-3. On Vercel, create a NEW project and import the new repo. Framework
-   preset: Vite. No environment variables needed — deploy.
-4. You get a brand-new `.vercel.app` link. The `vercel.json` in the project
-   already handles deep links, so refreshing a post page works.
+## How to deploy Round 2
 
-After deploy, run the walk-the-8 once on your new link
+The repo and Vercel project already exist (created for Round 1). Deploying
+Round 2 is just a push — Vercel auto-deploys `main`:
+
+```bash
+npm install
+npm run build        # must be green
+git add -A
+git commit -m "Round 2: cinematic glass + explore, trending, follow lists"
+git push origin main
+```
+
+Wait a minute for Vercel to build, then open the live link and check the
+glass feed loads. If the link ever shows a Vercel login wall instead of
+the site, Deployment Protection turned itself back on: Vercel project
+Settings → Deployment Protection → OFF.
+
+(Deploying from scratch instead? Create a NEW empty repo, push this folder
+to it, then import it as a NEW Vercel project with the Vite preset and no
+env vars. The `vercel.json` in the project already handles deep links, so
+refreshing a post page works.)
+
+After deploy, run the walk-the-8 once on your link
 (see `docs/COMPETITION-CHECKLIST.md`) and confirm the site loads.
 
 ## Still open
