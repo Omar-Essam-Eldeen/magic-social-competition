@@ -31,7 +31,7 @@ import LikersModal from "./LikersModal.tsx";
 const LIKED_COLOR = "#fb4d6d";
 const SAVED_COLOR = "#8b5cf6";
 
-/** Post photos: 16/9 cover, 12px radius, pointer when they open the lightbox. */
+/** Post photos: 16/9 cover, glass radius (22px), pointer when they open the lightbox. */
 const POST_IMAGE_STYLE = { aspectRatio: "16 / 9", objectFit: "cover" } as const;
 
 /** Relative time ("2h ago"); never renders "Invalid Date". */
@@ -346,7 +346,7 @@ export default function PostCard({ post }: { post: Post }) {
       )}
 
       {!editing && post.isShare && sharedPost && (
-        <Card withBorder radius="md" padding="sm" mb="sm">
+        <Card withBorder radius="lg" padding="sm" mb="sm">
           <Group gap="xs" mb="xs">
             <Avatar src={sharedPost.user?.photo} alt={sharedAuthorName} radius="xl" size="sm">
               {sharedPost.user?.name?.[0]}
@@ -394,7 +394,7 @@ export default function PostCard({ post }: { post: Post }) {
       {topComment?.content && (
         <Card
           withBorder
-          radius="md"
+          radius="lg"
           padding="sm"
           mb="sm"
           style={{ cursor: "pointer" }}

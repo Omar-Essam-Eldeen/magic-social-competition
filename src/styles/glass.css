@@ -247,7 +247,7 @@ body {
   overflow: hidden;
   width: 100%;
   aspect-ratio: 16 / 9;
-  border-radius: 17px;
+  border-radius: 22px;
   border: 1px solid var(--glass-border);
   box-shadow: 0 18px 34px -14px rgba(0, 0, 20, 0.55);
 }

@@ -57,7 +57,7 @@ export default function Signup() {
 
   return (
     <Container size="xs" py="xl">
-      <Paper radius="md" p="xl">
+      <Paper radius="lg" p="xl">
         <Center mb="md">
           <LogoMark size={48} />
         </Center>

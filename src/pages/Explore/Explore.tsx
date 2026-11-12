@@ -70,7 +70,7 @@ export default function Explore() {
         {isPending ? (
           <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
             {Array.from({ length: 6 }, (_, i) => (
-              <Skeleton key={i} radius={17} style={{ aspectRatio: "1 / 1", height: "auto" }} />
+              <Skeleton key={i} radius={22} style={{ aspectRatio: "1 / 1", height: "auto" }} />
             ))}
           </SimpleGrid>
         ) : isError ? (
@@ -95,7 +95,7 @@ export default function Explore() {
                   <div
                     style={{
                       overflow: "hidden",
-                      borderRadius: 17,
+                      borderRadius: 22,
                       aspectRatio: "1 / 1",
                       border: "1px solid var(--glass-border)",
                     }}>
@@ -108,7 +108,7 @@ export default function Explore() {
             {isFetchingNextPage && (
               <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
                 {Array.from({ length: 3 }, (_, i) => (
-                  <Skeleton key={i} radius={17} style={{ aspectRatio: "1 / 1", height: "auto" }} />
+                  <Skeleton key={i} radius={22} style={{ aspectRatio: "1 / 1", height: "auto" }} />
                 ))}
               </SimpleGrid>
             )}
