@@ -34,7 +34,7 @@ function StatChip({ value, label }: { value: number; label: string }) {
   const animated = useCountUp(value);
   return (
     <div className="stat-chip">
-      <Text className="stat-value" aria-label={`${value} ${label}`}>
+      <Text className="stat-value">
         {animated}
       </Text>
       <Text size="xs" c="dimmed" tt="uppercase">
@@ -192,12 +192,10 @@ export default function UserProfile() {
             <Group gap="sm" mt="md">
               <StatChip value={totalPosts} label={t.common.posts} />
               <UnstyledButton
-                aria-label={`${followersCount} ${t.common.followers} — ${t.userProfile.viewFollowersAria}`}
                 onClick={() => setListOpen("followers")}>
                 <StatChip value={followersCount} label={t.common.followers} />
               </UnstyledButton>
               <UnstyledButton
-                aria-label={`${followingCount} ${t.common.followingCount} — ${t.userProfile.viewFollowingAria}`}
                 onClick={() => setListOpen("following")}>
                 <StatChip value={followingCount} label={t.common.followingCount} />
               </UnstyledButton>
