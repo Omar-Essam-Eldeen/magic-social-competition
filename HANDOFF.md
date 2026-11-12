@@ -44,18 +44,22 @@ TypeScript + Mantine 9. This folder is a finished, fully verified copy —
 | PWA (manifest, icons, service worker activated + controlling) | **PASS** |
 | Clean install (`npm ci` → build → lint) | **Green** |
 
-## How to deploy it
+## How to deploy it (no repo, no Vercel)
 
-1. Copy this folder onto your machine (or `git pull` this copy into your repo).
-2. From **your** machine, in this folder:
-   ```bash
-   npm install
-   npm run build        # must be green
-   git add -A && git commit -m "Competition upgrade"
-   git push             # Vercel redeploys automatically
-   ```
-3. After deploy, re-run the walk-the-8 once on the live URL
-   (see `docs/COMPETITION-CHECKLIST.md`) and confirm the site loads.
+You don't need git or Vercel for this. The app is already built — use the
+`magic-social-deploy` folder, which holds the pre-built `dist/`:
+
+1. Open https://app.netlify.com/drop (or any static host that serves files).
+2. Drag the `dist` folder onto the page. That's it — the site is live, and
+   you get its link right there.
+3. Any other static host works the same way: upload the contents of `dist/`
+   to the host's public folder. The `_redirects` file inside `dist/` handles
+   deep links on Netlify; on other hosts, set the SPA fallback to
+   `index.html` (one setting — see DEPLOY-ANYWHERE.md).
+
+No build step is needed on the host — the files are already built.
+After deploy, run the walk-the-8 once on your new link
+(see `docs/COMPETITION-CHECKLIST.md`) and confirm the site loads.
 
 ## Still open
 

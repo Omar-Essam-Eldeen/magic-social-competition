@@ -2,7 +2,7 @@
 
 A social media app — share posts with photos, follow people you like, and save the posts you love. Built with React + TypeScript for my Route Academy assignment, then upgraded for competition.
 
-**🌐 Live demo:** https://socialapp-seven-phi.vercel.app/
+**🌐 Live demo:** (add your link here after deploying — see DEPLOY-ANYWHERE.md)
 
 ## Screenshots
 
@@ -110,7 +110,7 @@ src/
 ├── components/     # PostCard, Composer, LikersModal, SuggestionsCard, FollowButton, …
 ├── context/        # Auth + Language providers
 ├── i18n/           # English/Arabic dictionary
-├── theme.ts        # Mantine theme (light/dark, glass style)
+├── theme.ts        # Mantine theme (light/dark, clean modern style)
 └── types.ts        # shared types
 ```
 
