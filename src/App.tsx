@@ -220,9 +220,20 @@ export default function App() {
       "/bookmarks": t.common.titles.saved,
       "/notifications": t.common.titles.notifications,
     };
-    document.title = pathname.startsWith("/posts/")
-      ? t.common.titles.post
-      : (pageTitles[pathname] ?? t.common.titles.home);
+    // Round 5 (M4): /tags/:tag gets its own title from the tag in the URL.
+    let title = pageTitles[pathname] ?? t.common.titles.home;
+    if (pathname.startsWith("/posts/")) {
+      title = t.common.titles.post;
+    } else if (pathname.startsWith("/tags/")) {
+      let rawTag = pathname.slice("/tags/".length);
+      try {
+        rawTag = decodeURIComponent(rawTag);
+      } catch {
+        // Malformed percent-encoding — keep the raw segment.
+      }
+      title = t.tag.pageTitle(rawTag);
+    }
+    document.title = title;
   }, [location.pathname, t]);
 
   const handleLogout = () => {

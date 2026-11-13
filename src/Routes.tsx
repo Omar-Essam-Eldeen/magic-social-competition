@@ -4,6 +4,7 @@ import Signup from "./pages/Auth/Signup.tsx";
 import { RootSwitch } from "./pages/Landing/Landing.tsx";
 import { GuestRoute, ProtectedRoute } from "./components/Guards/ProtectedRoutes.tsx";
 import PostDetails from "./pages/Posts/PostDetails.tsx";
+import TagPage from "./pages/Posts/TagPage.tsx";
 import Profile from "./pages/Profile/Profile.tsx";
 import Bookmarks from "./pages/Posts/Bookmarks.tsx";
 import Notifications from "./pages/Notifications/Notifications.tsx";
@@ -36,6 +37,14 @@ export default function AppRoutes() {
         element={
           <ProtectedRoute>
             <PostDetails />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/tags/:tag"
+        element={
+          <ProtectedRoute>
+            <TagPage />
           </ProtectedRoute>
         }
       />

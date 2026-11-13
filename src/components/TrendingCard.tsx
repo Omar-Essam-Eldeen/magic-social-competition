@@ -56,7 +56,7 @@ export default function TrendingCard() {
               key={display.toLowerCase()}
               className="hashtag-link"
               aria-label={t.trending.tagAria(`#${display}`)}
-              onClick={() => navigate(`/?q=%23${encodeURIComponent(display)}`)}>
+              onClick={() => navigate(`/tags/${encodeURIComponent(display)}`)}>
               <Group gap="xs">
                 <Text size="sm">#{display}</Text>
                 <Text size="sm" c="dimmed">
