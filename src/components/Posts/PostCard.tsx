@@ -435,7 +435,10 @@ export default function PostCard({ post }: { post: Post }) {
             <Text span fw={700}>
               {topCommentAuthor}:{" "}
             </Text>
-            <HashtagText text={topComment.content} knownUsers={knownUsers} />
+            {/* Plain text: links nested inside this role="button" card fail
+                axe nested-interactive; the card navigates to the post,
+                where the comment renders with working links. */}
+            <HashtagText text={topComment.content} knownUsers={knownUsers} plain />
           </Text>
         </Card>
       )}
