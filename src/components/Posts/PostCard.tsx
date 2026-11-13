@@ -148,6 +148,22 @@ export default function PostCard({ post }: { post: Post }) {
     onSuccess: async () => {
       refresh();
       const url = `${window.location.origin}/posts/${post._id}`;
+      const text = (post.body ?? "").trim();
+      // Round 5 (M2): on phones the system share sheet takes over — the
+      // API share still counts, but the link is shared natively instead
+      // of copied. Desktop (no navigator.share) keeps the old copy +
+      // toast path exactly. A dismissed sheet is silent: no fallback
+      // copy, no error toast. Any other share failure falls through to
+      // the copy-link fallback below.
+      if (typeof navigator.share === "function") {
+        try {
+          await navigator.share({ title: t.common.brand, text: text || undefined, url });
+          notifications.show({ title: t.toasts.shared, message: "" });
+          return;
+        } catch (err) {
+          if (err instanceof DOMException && err.name === "AbortError") return;
+        }
+      }
       try {
         if (navigator.clipboard) {
           await navigator.clipboard.writeText(url);

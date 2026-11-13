@@ -269,6 +269,13 @@ export const en = {
     userFallback: "User",
     rowAria: (name: string, action: string, time: string): string =>
       `${name} ${action}${time ? `, ${time}` : ""}`,
+    // Round 5 (M5) — notification tabs. Comment/follow types map to their
+    // tab; every other type (likes, shares, future types) is All-only.
+    tabAll: "All",
+    tabComments: "Comments",
+    tabFollows: "Follows",
+    emptyComments: "No comments yet.",
+    emptyFollows: "No follows yet.",
   },
   search: {
     placeholder: "Search posts by text or author...",
@@ -294,6 +301,15 @@ export const en = {
     title: "Trending",
     empty: "No hashtags yet — add a #tag to a post to see it here.",
     tagAria: (tag: string): string => `Show posts with ${tag}`,
+  },
+  // Round 5 (M4) — hashtag pages (/tags/:tag). The count covers only the
+  // posts loaded so far, same as the feed search it replaces.
+  tag: {
+    title: (tag: string): string => `#${tag}`,
+    pageTitle: (tag: string): string => `#${tag} — Magic Social`,
+    postsCount: (count: number): string => `${count} post${count === 1 ? "" : "s"}`,
+    empty: (tag: string): string => `No posts with #${tag} yet.`,
+    loadErrorTitle: "Couldn't load posts for this tag",
   },
   followersList: {
     followersTitle: "Followers",
@@ -600,6 +616,12 @@ export const ar: Dict = {
     userFallback: "مستخدم",
     rowAria: (name: string, action: string, time: string): string =>
       `${name} ${action}${time ? `، ${time}` : ""}`,
+    // Round 5 (M5) — تبويبات الإشعارات.
+    tabAll: "الكل",
+    tabComments: "التعليقات",
+    tabFollows: "المتابَعون",
+    emptyComments: "لا توجد تعليقات بعد.",
+    emptyFollows: "لا يوجد متابَعون بعد.",
   },
   search: {
     placeholder: "ابحث في المنشورات بالنص أو الكاتب...",
@@ -625,6 +647,15 @@ export const ar: Dict = {
     title: "الرائج",
     empty: "لا توجد وسوم بعد — أضف #وسمًا إلى منشور لتراه هنا.",
     tagAria: (tag: string): string => `عرض المنشورات التي تحتوي على ${tag}`,
+  },
+  // Round 5 (M4) — صفحات الوسوم (/tags/:tag).
+  tag: {
+    title: (tag: string): string => `#${tag}`,
+    pageTitle: (tag: string): string => `#${tag} — Magic Social`,
+    postsCount: (count: number): string =>
+      arPlural(count, "منشور واحد", "منشوران", "منشورات", "منشورًا"),
+    empty: (tag: string): string => `لا توجد منشورات تحتوي على #${tag} بعد.`,
+    loadErrorTitle: "تعذّر تحميل منشورات هذا الوسم",
   },
   followersList: {
     followersTitle: "المتابعون",
