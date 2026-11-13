@@ -1018,3 +1018,151 @@ that now.
     pre-existing, left as-is.
   - Throwaway avatars are the uploaded favicon (no un-upload endpoint)
     — harmless, throwaway accounts only.
+
+## Round 5 — Top 5 extras: mentions, share sheet, drafts + emoji, hashtag pages, notification tabs (2026-11-13)
+
+User asked what else could be built; the top 5 from the extras list
+was approved ("Build the top 5", 2026-11-13 15:01). Nothing was
+missing from the required scope — this is extra shine.
+
+### Implementation (5 implementer commits + 3 verify-fix commits on top of `9697152`)
+
+- `b6b9a1c` — M1 @mentions render: new `src/utils/mentions.ts`
+  (pure helpers: `buildKnownUsersMap`, `findMentionQuery`,
+  `insertMention` / `insertAtCursor`, `composerDraftKey`,
+  `COMPOSER_EMOJIS`) + new `src/hooks/useKnownUsers.ts` (map from
+  already-loaded data: follow suggestions via the shared
+  `["suggestions"]` cache key, current user, plus caller-passed
+  extras — post/shared-post/top-comment authors, comment + reply
+  authors). `HashtagText.tsx` single-pass tokenizer now handles
+  `#tag` and `@user`; a mention links to `/users/:id` only when the
+  username is in the map (case-insensitive), unknown names stay plain
+  text. PostCard passes the map into post body, shared-post body and
+  top-comment preview; CommentItem renders mentions in comment and
+  reply bodies. `.mention-link` shares the hashtag-link style.
+- `8ff01d2` — M3 drafts + emoji + @ autocomplete (Composer only):
+  text auto-saves debounced (400 ms) to
+  `magic-social:composer-draft:<userId>`, restores on mount into an
+  untouched composer, cleared on successful post. Text only — image
+  attachments are NOT persisted. Mantine Popover with 40 built-in
+  emoji, no new dependency, inserts at the caret. @ autocomplete
+  dropdown (suggestions first, max 5, prefix on username, substring
+  on name); ArrowUp/Down + Enter/Tab to pick, Escape to dismiss,
+  mouse-down selection keeps textarea focus.
+- `997e648` — M2 native share sheet: PostCard share handler tries
+  `navigator.share({ title, text, url })` first when it exists
+  (phones); success shows the existing "Post shared" toast;
+  `AbortError` is silent; any other failure falls through to the
+  clipboard-copy + "Post link copied" toast (incl. legacy textarea
+  fallback). Desktop unchanged. The API share still counts in all
+  cases.
+- `581acd0` — M4 hashtag pages: new `src/pages/Posts/TagPage.tsx`
+  on route `/tags/:tag` — `#tag` header, count of loaded matches,
+  all loaded posts containing that whole hashtag (case-insensitive),
+  reusing the feed's `["posts", "all"]` infinite query (shared cache
+  with Home) and PostCard; infinite scroll, retry, "caught up",
+  empty state, error state with retry. Trending tags navigate to
+  `/tags/:tag`; `App.tsx` sets the document title
+  (`#tag — Magic Social`). The old `?q=` feed search is untouched.
+  (Hashtag link targets changed from `/?q=` to `/tags/` inside the
+  M1 commit `b6b9a1c`, line 54 of its diff.)
+- `71364fc` — M5 notification tabs: Mantine Tabs on
+  `/notifications` — All / Comments / Follows — filtering the
+  already-loaded list only. `comment_post`/`comment` → Comments,
+  `follow_user`/`follow` → Follows; likes, shares and any future
+  type appear under All only. Per-tab unread-count badges (hidden
+  when fully read), per-tab empty states, mark-one / mark-all-read
+  keep working in every tab (mark-all-read stays global).
+
+### What changed
+
+- **M1 @mentions:** `@username` links to profiles in posts,
+  comments and replies; unknown usernames stay plain text, never a
+  guessed id. Autocomplete shipped (not cut).
+- **M2 Native share sheet:** system sheet on phones, copy-link
+  fallback everywhere else.
+- **M3 Composer drafts + emoji:** drafts survive refresh (text
+  only, per user, local only); 40 built-in emoji at the caret.
+- **M4 Hashtag pages:** `/tags/:tag` is a real page; hashtag clicks
+  navigate there.
+- **M5 Notification tabs:** All / Comments / Follows with per-tab
+  unread badges.
+
+### Verification (2026-11-13, throwaway accounts only)
+
+- `npm run build` GREEN, `npm run lint` exit 0 (after every stage
+  and on the final tree; final bundle `index-y1siYGt5.js`).
+- Functional: **101/101 PASS** (final run, exit 0) — walk-the-8 +
+  full regression + every Round 5 check: mention links to the right
+  profile (self, suggestion user `ahmedmutti`, post-author,
+  top-comment-author) with unknown `@nosuchuser99999` plain text;
+  autocomplete listbox/keyboard/mouse/Escape; draft survives refresh,
+  image not persisted, draft clears after posting; emoji inserts at
+  caret; share fallback on desktop + share-sheet call (title/text/url)
+  on a stubbed-`navigator.share` mobile viewport, AbortError silent,
+  non-abort failure falls back to copy; hashtag page (count matches
+  listed cards, case-insensitive, empty state, trending navigates,
+  `?q=` intact); notification tabs filter correctly with per-tab
+  badges, mark-one in Comments tab, mark-all-read from Follows tab.
+  Focus rings verified via real keyboard Tab; reduced motion PASS.
+- Visual + axe: **12/12 PASS, axe 0 violations** on Home,
+  PostDetails, Notifications, TagPage, Profile, Explore (light) +
+  Home RTL — light + dark, desktop + mobile, RTL, including hashtag
+  page, mention rendering in post and comment, emoji popover,
+  notification tabs; reviewed, no visual defects found.
+- Three real defects found in verification and fixed (see commits
+  below): Escape couldn't dismiss the @ autocomplete (keyup caret
+  handler reopened the listbox for the same `@query` — fixed with a
+  dismissed-query memory that clears when the query disappears);
+  post-author mention stayed plain text in CommentItem for non-author
+  viewers (feed linked it, details didn't — `post.user` now joins
+  the mention map); axe `nested-interactive` on 5 pages
+  (mention/hashtag links nested inside the top-comment preview's
+  `role="button"` card — preview now renders plain text, links still
+  work on the details page). Harness flaws fixed along the way (not
+  app bugs): emoji caret expectation (UTF-16 units), notification
+  totals capped at the API's 50-item page, repeat-share API 409
+  (fresh probe posts), reply-delete targeting, focus-ring checks now
+  use keyboard Tab.
+- Cleanup verified via API: zero probe posts left on testmagic99/2/3
+  (searched for all RUN markers), t99 followers back to baseline 0,
+  testmagic2 not following testmagic99, all probe comments/replies/
+  posts and the 7 share-created server copies deleted, testmagic3
+  password round-tripped back to `Test5678!`. The user's real account
+  was never touched.
+- Caveats: share sheet verified via a stubbed `navigator.share`
+  (call attempted + args checked); no real OS sheet exists in
+  headless. One unrelated console error in the final run: `Image
+  corrupt or truncated` for a pre-existing third-party R2 image in
+  another user's post; the 3 "failed requests" are expected 404s
+  from deleting probe posts/comments.
+- Harness: `~/workspace/predeploy/visual-verify/round5-functional.js`
+  + `round5-shots.js`; logs `round5-functional6.log`,
+  `round5-shots3.log`; screenshots under `shots/round5/` and
+  `shots/round5-functional/`.
+
+### Delivery (2026-11-13)
+
+- Final state: `npm run build` GREEN, `npm run lint` exit 0.
+- Commits on `main` (8 ahead of `origin/main` before push, plus this
+  docs commit): `997e648`, `581acd0`, `b6b9a1c`, `8ff01d2`, `71364fc`
+  (implementer), `8bffec3` (verify fix: Escape dismissal for @
+  autocomplete), `8483540` (verify fix: post author in the comment
+  mention map), `fe3cc47` (verify fix: top-comment preview renders
+  plain text, axe nested-interactive).
+- Deploy: `git push origin main` → Vercel auto-deploys to the stable
+  production address https://magic-social-competition.vercel.app.
+  Verify anonymously afterwards (root 200, new bundle hash, title
+  "Magic Social", `/login` 200, `manifest.webmanifest` 200, service
+  worker 200; Deployment Protection must stay OFF). NEVER check or
+  share the `5fq473ges` snapshot URL — it never updates.
+- Open items as they now stand:
+  - Competition name / deadline / judging criteria — unknown (only
+    known: share on LinkedIn + mention the organizers, weeks left,
+    organizer handle not given).
+  - His two posts "wefwe" / "test.." are still on the live feed — only
+    he can delete them (his account); flagged, not touched.
+  - @testmagic99 has 7 unread notifications from other users —
+    pre-existing, left as-is.
+  - Throwaway avatars are the uploaded favicon (no un-upload endpoint)
+    — harmless, throwaway accounts only.

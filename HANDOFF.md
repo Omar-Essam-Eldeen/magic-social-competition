@@ -8,11 +8,11 @@ production address **https://magic-social-competition.vercel.app**
 first-deploy URL with the `5fq473ges` hash — that is a pinned
 per-deployment snapshot and never updates; the address above is the
 one that always serves the latest build. Deployment Protection is OFF.
-This folder is the **Round 4** upgrade on top of Round 3 — chrome
-polish: the brand lives in the navbar only, no hard divider line under
-it, both sidebars take the full viewport height with rounded corners,
-and the right-aside cards scroll fully into view. Push this folder's
-`main` to the repo and Vercel auto-deploys it to the same live link.
+This folder is the **Round 5** upgrade on top of Round 4 — the top 5
+extras: @mentions that link to profiles, the native share sheet on
+phones, composer drafts + emoji picker, real hashtag pages, and
+notification tabs. Push this folder's `main` to the repo and Vercel
+auto-deploys it to the same live link.
 
 ## What changed
 
@@ -159,6 +159,45 @@ never shrink) and the back-to-top pill was unclickable on desktop
 (the full-height rails sat above it — its z-index now sits above the
 rails, below modals). Both fixed and re-verified — see `STAGELOG.md`.
 
+## Round 5 — Top 5 extras: mentions, share sheet, drafts + emoji, hashtag pages, notification tabs (2026-11-13)
+
+You asked what else could be built and tapped "Build the top 5".
+Round 5 builds on Round 4 (glass design kept):
+
+- **M1 @mentions:** `@username` in post, comment and reply bodies
+  renders as a link to that user's profile. Resolution is
+  client-side, from data the app already loads (suggestions, authors,
+  likers, followers/following); a mention of a user not in that map
+  stays plain text — never a broken link, never a guessed id. The
+  composer has an @ autocomplete dropdown (suggestions first,
+  keyboard + mouse).
+- **M2 Native share sheet:** on phones the Share button opens the
+  system share sheet (title + text + link); anywhere else it keeps
+  the copy-link + toast behavior. Dismissing the sheet is silent; a
+  real failure falls back to copy.
+- **M3 Composer drafts + emoji picker:** composer text auto-saves to
+  localStorage (per user, debounced) and is restored on mount;
+  cleared after a successful post. Image attachments are NOT
+  persisted — text only. A popover with 40 built-in emoji inserts at
+  the caret; no new dependency.
+- **M4 Hashtag pages:** new route `/tags/:tag` — tag header, count,
+  and all loaded posts containing that tag, reusing PostCard and the
+  feed query. Clicking a hashtag anywhere now goes to its page; the
+  old `?q=` feed search still works.
+- **M5 Notification tabs:** All / Comments / Follows on the
+  notifications page, with per-tab unread badges; mark-one and
+  mark-all-read keep working in every tab. Unknown future types
+  appear under All only.
+
+Three real bugs found in Round 5 verification and fixed: Escape
+couldn't dismiss the @ autocomplete (a keyup handler reopened it);
+a post-author mention stayed plain text in CommentItem for non-author
+viewers (the post author now joins the mention map); axe
+`nested-interactive` from mention/hashtag links inside the
+top-comment preview button (the preview now renders plain text;
+links still work on the details page). All fixed and re-verified —
+see `STAGELOG.md`.
+
 ## What was tested — Round 2 (all 2026-11-12, throwaway accounts only)
 
 | Check | Result |
@@ -203,17 +242,31 @@ testing were deleted/undone afterwards; testmagic99 has 18 own posts
 with zero probe posts left, followers 0 / following 0, and testmagic3's
 password was changed and changed back to `Test5678!`.
 
-## How to deploy Round 4
+## What was tested — Round 5 (all 2026-11-13, throwaway accounts only)
+
+| Check | Result |
+|---|---|
+| Functional pass — walk-the-8 + full regression + all Round 5 features (mention links + unknown-username plain text, autocomplete keyboard/mouse/Escape, draft survives refresh + clears after posting, emoji inserts at caret, share fallback + stubbed share-sheet call, hashtag page + empty state, notification tabs + badges + mark-one/all-read, keyboard, reduced motion) | **101/101 PASS** |
+| Visual + axe shots (Home, PostDetails, Notifications, TagPage, Profile, Explore — light + dark, desktop + mobile, RTL, incl. hashtag page, mention rendering, emoji popover, notification tabs) | **12/12 PASS, axe 0 violations** |
+| Keyboard focus ring while tabbing | **Verified via real keyboard Tab** |
+| Reduced motion | **PASS** |
+| `npm run build` + `npm run lint` | **Green / clean** |
+
+All probe posts, comments, replies, follows and bookmarks created during
+testing were deleted/undone afterwards; testmagic3's password was changed
+and changed back to `Test5678!`.
+
+## How to deploy Round 5
 
 The repo and Vercel project already exist (created for Round 1). Deploying
-Round 4 is just a push — Vercel auto-deploys `main` to the stable
+Round 5 is just a push — Vercel auto-deploys `main` to the stable
 production address **https://magic-social-competition.vercel.app**:
 
 ```bash
 npm install
 npm run build        # must be green
 git add -A
-git commit -m "Round 4: brand once, no hard line, full-height rounded sidebars"
+git commit -m "Round 5: mentions, share sheet, drafts + emoji, hashtag pages, notification tabs"
 git push origin main
 ```
 

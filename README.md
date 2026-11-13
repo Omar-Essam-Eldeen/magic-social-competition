@@ -75,6 +75,11 @@ A social media app — share posts with photos, follow people you like, and save
 - **Top navbar** — sticky glass bar with search, notifications bell with unread badge, New post button, and an avatar menu (View profile / Change password / Log out)
 - **Back to top** — floating glass button that appears as you scroll
 - **Create anywhere** — the composer opens as a modal from the navbar or the sidebar, from any page
+- **@mentions** — tag people with @username; it links to their profile
+- **Native share sheet** — Share opens your phone's system menu; copy link everywhere else
+- **Composer drafts + emoji** — your draft survives a refresh; emoji picker in the composer
+- **Hashtag pages** — click any #tag for a page of every post with it
+- **Notification tabs** — All / Comments / Follows with per-tab unread badges
 
 ## Tech stack
 
