@@ -145,6 +145,11 @@ export const en = {
     dragActive: "Drop the image to attach it",
     chars: (count: number): string => `${count} characters`,
     removeImageAria: "Remove image",
+    // Round 5 — M1 @mentions + M3 emoji picker (own block, do not merge).
+    emojiPickerAria: "Insert an emoji",
+    emojiAria: (emoji: string): string => `Insert ${emoji}`,
+    mentionListLabel: "People to mention",
+    mentionAria: (name: string, username: string): string => `Mention ${name} (@${username})`,
   },
   post: {
     unavailable: "Post unavailable",
@@ -493,6 +498,11 @@ export const ar: Dict = {
     dragActive: "أسقط الصورة لإرفاقها",
     chars: (count: number): string => `${count} حرفًا`,
     removeImageAria: "إزالة الصورة",
+    // Round 5 — M1 @mentions + M3 emoji picker (own block, do not merge).
+    emojiPickerAria: "أدخل رمزًا تعبيريًا",
+    emojiAria: (emoji: string): string => `أدخل ${emoji}`,
+    mentionListLabel: "أشخاص للإشارة إليهم",
+    mentionAria: (name: string, username: string): string => `الإشارة إلى ${name} (@${username})`,
   },
   post: {
     unavailable: "المنشور غير متاح",

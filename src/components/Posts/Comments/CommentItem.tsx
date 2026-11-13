@@ -11,6 +11,8 @@ import type { Comment } from "../../../api/Posts/Comments/types.ts";
 import { createReply, deleteComment, getReplies, likeComment, updateComment } from "../../../api/Posts/Comments/api.ts";
 import { useAuth } from "../../../context/useAuth.ts";
 import { useLanguage } from "../../../context/useLanguage.ts";
+import { useKnownUsers } from "../../../hooks/useKnownUsers.ts";
+import HashtagText from "../HashtagText.tsx";
 import type { Language } from "../../../i18n/dictionary.ts";
 
 const LIKED_COLOR = "#fb4d6d";
@@ -113,6 +115,14 @@ export default function CommentItem({
     enabled: !nested,
   });
   const replies = repliesQuery.data?.data.replies ?? [];
+
+  // Round 5 M1 — @mentions resolve against users already loaded here: the
+  // comment author and the reply authors (plus suggestions + the current
+  // user, inside the hook). Unknown @names stay plain text.
+  const { byUsername: knownUsers } = useKnownUsers([
+    comment.commentCreator,
+    ...replies.map((reply) => reply.commentCreator),
+  ]);
 
   const likeMutation = useMutation({
     mutationFn: () => likeComment(postId, comment._id),
@@ -266,7 +276,9 @@ export default function CommentItem({
         </>
       ) : (
         <>
-          <Text size="sm">{comment.content}</Text>
+          <Text size="sm">
+            <HashtagText text={comment.content} knownUsers={knownUsers} />
+          </Text>
           {comment.image && (
             <Image
               src={comment.image}

@@ -24,6 +24,7 @@ import type { UpdatePostReq } from "../../api/Posts/types.ts";
 import { bookmarkPost, deletePost, likePost, sharePost, updatePost } from "../../api/Posts/api.ts";
 import { useAuth } from "../../context/useAuth.ts";
 import { useLanguage } from "../../context/useLanguage.ts";
+import { useKnownUsers } from "../../hooks/useKnownUsers.ts";
 import type { Language } from "../../i18n/dictionary.ts";
 import HashtagText from "./HashtagText.tsx";
 import LikersModal from "./LikersModal.tsx";
@@ -62,6 +63,15 @@ export default function PostCard({ post }: { post: Post }) {
   const [likePop, setLikePop] = useState(false);
   const [likersOpen, setLikersOpen] = useState(false);
   const cardRef = useRef<HTMLDivElement | null>(null);
+
+  // Round 5 M1 — @mentions resolve against users already loaded here:
+  // the post author, the shared-post author, and the top-comment author
+  // (plus suggestions + the current user, inside the hook).
+  const { byUsername: knownUsers } = useKnownUsers([
+    post.user,
+    post.sharedPost?.user,
+    post.topComment?.commentCreator,
+  ]);
 
   // Desktop tilt + shine: fine pointers only, never with reduced motion.
   // Mutates the card's own style directly — no re-render per pointer move.
@@ -356,7 +366,7 @@ export default function PostCard({ post }: { post: Post }) {
       ) : (
         post.body && (
           <Text size="sm" mb="sm">
-            <HashtagText text={post.body} />
+            <HashtagText text={post.body} knownUsers={knownUsers} />
           </Text>
         )
       )}
@@ -380,7 +390,7 @@ export default function PostCard({ post }: { post: Post }) {
           </Group>
           {sharedPost.body && (
             <Text size="sm" mb={sharedPost.image ? "sm" : undefined}>
-              <HashtagText text={sharedPost.body} />
+              <HashtagText text={sharedPost.body} knownUsers={knownUsers} />
             </Text>
           )}
           {sharedPost.image && (
@@ -425,7 +435,7 @@ export default function PostCard({ post }: { post: Post }) {
             <Text span fw={700}>
               {topCommentAuthor}:{" "}
             </Text>
-            {topComment.content}
+            <HashtagText text={topComment.content} knownUsers={knownUsers} />
           </Text>
         </Card>
       )}

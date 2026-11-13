@@ -291,15 +291,18 @@ body {
   transform: scale(1.04);
 }
 
-/* ---- Hashtag links ---- */
-.hashtag-link {
+/* ---- Hashtag + mention links ---- */
+.hashtag-link,
+.mention-link {
   color: var(--tag-color);
   font-weight: 700;
   text-decoration: none;
 }
 
 .hashtag-link:hover,
-.hashtag-link:focus {
+.hashtag-link:focus,
+.mention-link:hover,
+.mention-link:focus {
   text-decoration: underline;
 }
 
