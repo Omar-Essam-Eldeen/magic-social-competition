@@ -97,8 +97,38 @@ export default function Composer({ onCreated }: { onCreated?: () => void }) {
           .slice(0, MENTION_SUGGESTIONS_LIMIT);
 
   const updateMention = (value: string, caret: number) => {
-    setMention(findMentionQuery(value, caret));
+    const next = findMentionQuery(value, caret);
+    if (!next) {
+      // The "@query" is gone (cleared text, caret moved away) — a later
+      // identical query is fresh typing, not the dismissed one.
+      dismissedMentionRef.current = null;
+      setMention(null);
+      setActiveMention(0);
+      return;
+    }
+    // Verify fix (Round 5): Escape dismisses the listbox, but the keyup
+    // caret handler re-ran updateMention and reopened it for the same
+    // "@query" still under the caret. Remember the dismissed query+start
+    // and keep it closed until the query itself changes.
+    if (
+      dismissedMentionRef.current &&
+      next.query === dismissedMentionRef.current.query &&
+      next.start === dismissedMentionRef.current.start
+    ) {
+      setMention(null);
+      return;
+    }
+    setMention(next);
     setActiveMention(0);
+  };
+
+  // The "@query" Escape dismissed (query + "@" position). Cleared by
+  // choosing a mention or by any edit that changes the query.
+  const dismissedMentionRef = useRef<{ query: string; start: number } | null>(null);
+
+  const dismissMention = () => {
+    if (mention) dismissedMentionRef.current = { query: mention.query, start: mention.start };
+    setMention(null);
   };
 
   const handleBodyChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
@@ -131,7 +161,10 @@ export default function Composer({ onCreated }: { onCreated?: () => void }) {
     const el = textareaRef.current;
     const caret = el?.selectionStart ?? body.length;
     const next = insertMention(body, caret, candidate.username);
-    if (next) applyTextAtCaret(next);
+    if (next) {
+      dismissedMentionRef.current = null;
+      applyTextAtCaret(next);
+    }
   };
 
   // Round 5 M3 — emoji picker: curated built-in set, inserts at the caret.
@@ -143,7 +176,7 @@ export default function Composer({ onCreated }: { onCreated?: () => void }) {
 
   const handleMentionKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (mention === null || mentionMatches.length === 0) {
-      if (e.key === "Escape") setMention(null);
+      if (e.key === "Escape") dismissMention();
       return;
     }
     if (e.key === "ArrowDown") {
@@ -157,7 +190,7 @@ export default function Composer({ onCreated }: { onCreated?: () => void }) {
       chooseMention(mentionMatches[activeMention]);
     } else if (e.key === "Escape") {
       e.preventDefault();
-      setMention(null);
+      dismissMention();
     }
   };
 
