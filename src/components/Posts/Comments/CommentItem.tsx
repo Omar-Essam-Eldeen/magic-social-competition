@@ -29,6 +29,13 @@ export default function CommentItem({
   comment,
   postId,
   postOwnerId,
+  // Verify fix (Round 5): the post author belongs in the known-users map
+  // (plan M1: "post authors" are loaded data). Without it, a comment
+  // mentioning the post author linked in the feed (PostCard passes
+  // post.user) but stayed plain text here for any viewer except the
+  // author themself. PostDetails passes post.user; nested replies inherit
+  // it from their parent item.
+  postOwner,
   // A reply rendered inside its parent has no Reply button and fetches no
   // replies of its own — the UI supports exactly one reply level, which is
   // what it can display (the API has no read path for replies to replies).
@@ -37,6 +44,7 @@ export default function CommentItem({
   comment: Comment;
   postId: string;
   postOwnerId: string;
+  postOwner?: { _id: string; name: string; username: string; photo?: string | null } | null;
   nested?: boolean;
 }) {
   const { user } = useAuth();
@@ -117,9 +125,11 @@ export default function CommentItem({
   const replies = repliesQuery.data?.data.replies ?? [];
 
   // Round 5 M1 — @mentions resolve against users already loaded here: the
-  // comment author and the reply authors (plus suggestions + the current
-  // user, inside the hook). Unknown @names stay plain text.
+  // comment author, the reply authors, and the post author (plus
+  // suggestions + the current user, inside the hook). Unknown @names stay
+  // plain text.
   const { byUsername: knownUsers } = useKnownUsers([
+    postOwner,
     comment.commentCreator,
     ...replies.map((reply) => reply.commentCreator),
   ]);
@@ -382,7 +392,7 @@ export default function CommentItem({
         <Box ms="xl" ps="md" mt="sm" style={{ borderInlineStart: "2px solid var(--mantine-color-default-border)" }}>
           <Stack gap="sm">
             {replies.map((reply) => (
-              <CommentItem key={reply._id} comment={reply} postId={postId} postOwnerId={postOwnerId} nested />
+              <CommentItem key={reply._id} comment={reply} postId={postId} postOwnerId={postOwnerId} postOwner={postOwner} nested />
             ))}
           </Stack>
         </Box>

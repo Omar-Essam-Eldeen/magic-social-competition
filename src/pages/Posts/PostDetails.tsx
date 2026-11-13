@@ -136,7 +136,7 @@ export default function PostDetails() {
         ) : (
           <Stack gap="sm">
             {comments.map((comment) => (
-              <CommentItem key={comment._id} comment={comment} postId={postId} postOwnerId={post.user._id} />
+              <CommentItem key={comment._id} comment={comment} postId={postId} postOwnerId={post.user._id} postOwner={post.user} />
             ))}
           </Stack>
         )}
